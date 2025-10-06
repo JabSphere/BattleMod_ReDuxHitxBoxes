@@ -184,7 +184,7 @@ end
 
 B.MobjNearDamageFloor = function(mo)
 	local fof = ((P_MobjFlip(mo)==-1) and mo.ceilingrover) or mo.floorrover
-    return mo.subsector.sector.damagetype or (fof and P_CheckSolidLava(nil, fof))
+    return (mo.subsector.sector.damagetype and mo.z <= mo.subsector.sector.floorheight) or (fof and P_CheckSolidLava(nil, fof))
 end
 
 B.Blink = function(mo)
