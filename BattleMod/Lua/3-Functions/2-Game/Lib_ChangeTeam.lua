@@ -113,7 +113,7 @@ local function autobalance_team(team, amount)
 	local sorted = team
 
 	table.sort(sorted, function(p1, p2)
-		if not (p1 or p2) then return end
+		if not ((p1 and p1.valid) or (p2 and p2.valid)) then return end
 
 		-- Flagholders are exempt and won't be autobalanced
 		if p1.gotflag then
