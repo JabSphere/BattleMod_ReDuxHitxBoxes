@@ -4,7 +4,7 @@ local B = CBW_Battle
 
 local refiretime = 28
 
-local function B.newGunLook(player) 
+function B.newGunLook(player) 
 	local twod = (twodlevel or player.mo.flags2 & MF2_TWOD)
 	local ringdist, span
 	if not(twod)
