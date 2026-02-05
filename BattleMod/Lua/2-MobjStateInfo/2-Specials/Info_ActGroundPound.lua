@@ -17,7 +17,7 @@ mobjinfo[MT_GROUNDPOUND] = {
 	height = 16*FRACUNIT,
 	mass = 0,
 	damage = 0,
-	flags = MF_MISSILE|MF_GRENADEBOUNCE
+	flags = MF_MISSILE|MF_GRENADEBOUNCE|MF_BOUNCE
 }
 
 //Sonic Spin Wave Projectile
