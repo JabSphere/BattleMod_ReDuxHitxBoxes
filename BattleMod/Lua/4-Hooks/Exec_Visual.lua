@@ -173,89 +173,189 @@ local ARROW_CONSTANTSCALE = 1
 local ARROW_INVERTSCALE = 2
 //thinker for pointer
 B.BattleTagPointers = function(mo)
-	local delete = false
+	local hide = false
 	local arrowscale = ARROW_TAGSCALE
 	local target = mo.target
+	local color = SKINCOLOR_NONE
+	local player = mo.tracer.player
 
-	if not(B.IsValidPlayer(mo.tracer)) then
-		delete = true
+	if not(B.IsValidPlayer(mo.tracer)) or not(mo.tracer) then
+		if mo and mo.valid then
+			P_RemoveMobj(mo)
+		end
+		return false
 	elseif (gametype == GT_BATTLECTF) then
 		arrowscale = (mo.allydrop and ARROW_CONSTANTSCALE) or ARROW_INVERTSCALE
-		if mo.tracer.player.gotflag then
-			target = ({F.RedFlagPos, F.BlueFlagPos})[mo.tracer.player.ctfteam]
-		end
-		if not(mo.target and mo.target.valid) or ((mo.tracer.player.ctfteam == 1) and not(F.RedFlag and F.RedFlag.valid)) or ((mo.tracer.player.ctfteam == 2) and not(F.BlueFlag and F.BlueFlag.valid))then
-			delete = true
+		if mo.allydrop then
+			if (player.ctfteam == 2) and (F.RedFlag and F.RedFlag.valid) then
+				target = F.RedFlag
+				color = skincolor_redteam
+			elseif (player.ctfteam == 1) and (F.BlueFlag and F.BlueFlag.valid) then
+				target = F.BlueFlag
+				color = skincolor_blueteam
+			else
+				hide = true
+			end
+		else
+			if player.gotflag then
+				target = ({F.RedFlagPos, F.BlueFlagPos})[player.ctfteam]
+				color = ({skincolor_redteam, skincolor_blueteam})[player.ctfteam]
+			else
+				if (player.ctfteam == 1) and (F.RedFlag and F.RedFlag.valid) then
+					target = F.RedFlag
+					color = skincolor_redteam
+				elseif (player.ctfteam == 2) and (F.BlueFlag and F.BlueFlag.valid) then
+					target = F.BlueFlag
+					color = skincolor_blueteam
+				else
+					hide = true
+				end
+			end
 		end
 	elseif B.TagGametype() then
 		arrowscale = ARROW_TAGSCALE
-		if ((not(mo.tracer.player.battletagIT) or mo.target.player.battletagIT) or not(B.IsValidPlayer(mo.target))) then
-			delete = true
+		if ((not(player.battletagIT) or target.player.battletagIT) or not(B.IsValidPlayer(target))) then
+			hide = true
 		end
 	elseif B.RubyGametype() then
 		arrowscale = ARROW_CONSTANTSCALE
-		if mo.tracer.player.gotcrystal then
-			target = ({R.BlueGoal, R.RedGoal})[mo.tracer.player.ctfteam]
+		if mo.goalpointer then
+			if R.ID and R.ID.valid and R.ID.target and R.ID.target.valid and R.ID.target.player and R.ID.target.player.gotcrystal then
+				local flagholder = R.ID.target.player
+				if player.ctfteam == flagholder.ctfteam then
+					target = ({R.BlueGoal, R.RedGoal})[mo.tracer.player.ctfteam]
+					color = ({skincolor_blueteam, skincolor_redteam})[mo.tracer.player.ctfteam]
+				else
+					target = ({R.RedGoal, R.BlueGoal})[mo.tracer.player.ctfteam]
+					color = ({skincolor_redteam, skincolor_blueteam})[mo.tracer.player.ctfteam]
+				end
+			else
+				hide = true
+			end
 		else
 			if R.ID and R.ID.valid then
 				if R.ID.target and R.ID.target.valid and R.ID.target.player and R.ID.target.player.gotcrystal then
 					target = R.ID.target
+				else
+					target = R.ID
 				end
+				color = SKINCOLOR_MAGENTA
+			else
+				hide = true
 			end
-		end
-		if not(R.ID and R.ID.valid) then
-			delete = true
 		end
 	elseif B.DiamondGametype() then
 		arrowscale = ARROW_CONSTANTSCALE
-		if mo.tracer.player.gotcrystal then
-			target = D.ActivePoint
-			if not(target and target.valid) then
-				delete = true
+
+		if mo.goalpointer then
+			if D.ActivePoint and D.ActivePoint.valid and not(player.gotcrystal) then
+
+				target = D.ActivePoint
+				color = SKINCOLOR_GREY
+			else
+				hide = true
 			end
 		else
-			if D.Diamond and D.Diamond.valid then
-				if D.Diamond.target and D.Diamond.target.valid and D.Diamond.target.player and D.Diamond.target.player.gotcrystal then
-					target = D.Diamond.target
+			if player.gotcrystal then
+				if D.ActivePoint and D.ActivePoint.valid then
+
+					target = D.ActivePoint
+
+
+					if D.Diamond and D.Diamond.valid then
+						color = D.Diamond.color
+					else --This shouldn't ever happen, but just in case
+						color = SKINCOLOR_GOLD
+					end
+
+
+				else
+
+					hide = true
+
+				end
+			else
+				if D.Diamond and D.Diamond.valid then
+
+					if D.Diamond.target and D.Diamond.target.valid and D.Diamond.target.player and D.Diamond.target.player.gotcrystal then
+
+
+						target = D.Diamond.target
+						color = D.Diamond.target.player.skincolor
+
+					else
+
+						target = D.Diamond
+						color = D.Diamond.color
+					end
+
+				else
+
+					hide = true
+
 				end
 			end
-		end
-		if not(D.Diamond and D.Diamond.valid) then
-			delete = true
 		end
 	elseif B.CPGametype() then
 		arrowscale = ARROW_CONSTANTSCALE
 		if CP.ID and CP.Num and CP.ID[CP.Num] and CP.ID[CP.Num].valid and ((CP.Timer <= TICRATE*10) or (CP.Active == true)) then
 			target = CP.ID[CP.Num]
+
+			if G_GametypeHasTeams() then
+
+				if (CP.TeamCapAmt[1] > CP.TeamCapAmt[2]) then --Red Team is winning?
+					color = skincolor_redteam
+				elseif (CP.TeamCapAmt[2] > CP.TeamCapAmt[1]) then --Blue Team is winning?
+					color = skincolor_blueteam
+				else
+					color = SKINCOLOR_YELLOW --Tie?
+				end
+
+			else
+				if CP.LeadCapPlr then --Is there a player in the lead?
+					color = CP.LeadCapPlr.skincolor
+				else
+					color = SKINCOLOR_GOLD
+				end
+			end
 		else
-			delete = true
+			hide = true
 		end
 	elseif B.SuddenDeath then
 		arrowscale = ARROW_CONSTANTSCALE
 		if B.ZoneObject and B.ZoneObject.valid then
 			target = B.ZoneObject
+			color = SKINCOLOR_COPPER --idk I couldn't think of a better color
 		else
-			delete = true
+			hide = true
 		end
 	end
 
-	if not(target) and not(mo.target and mo.target.valid) then
-		delete = true
+	if not(target and target.valid) then
+		hide = true
 	end
 
-	if delete then
-		if mo.tracer and mo.tracer.valid then
-			if mo == mo.tracer.btagpointer then
-				mo.tracer.btagpointer = nil
-			end
+	if hide then
+		if B.TagGametype() then
+			if mo.tracer and mo.tracer.valid then
+				if mo == mo.tracer.btagpointer then
+					mo.tracer.btagpointer = nil
+				end
 
-			if mo == mo.tracer.btagpointer2 then
-				mo.tracer.btagpointer2 = nil
+				if mo == mo.tracer.btagpointer2 then
+					mo.tracer.btagpointer2 = nil
+				end
+				mo.tracer.btagpointers = nil
 			end
-			mo.tracer.btagpointers = nil
+			P_RemoveMobj(mo)
+			return
+		else
+			mo.flags2 = $|MF2_DONTDRAW
 		end
-		P_RemoveMobj(mo)
-		return
+	else
+		if not(B.TagGametype()) then
+			mo.flags = $ & ~MF2_DONTDRAW
+		end
 	end
 	
 	//change the appearance based on perspective
@@ -277,44 +377,12 @@ B.BattleTagPointers = function(mo)
 		end
 	end
 	mo.drawonlyforplayer = mo.tracer.player
-	mo.color = ((gametype == GT_BATTLECTF) and ((mo.allydrop and {skincolor_blueteam, skincolor_redteam}) or {skincolor_redteam, skincolor_blueteam})[mo.tracer.player.ctfteam]) or
-			   (B.TagGametype() and mo.target.player.skincolor) or
-			   (B.RubyGametype() and (
-						(mo.tracer.player.gotcrystal and ({skincolor_blueteam, skincolor_redteam})[mo.tracer.player.ctfteam]) or
-						((R.ID and R.ID.valid and R.ID.target and R.ID.target.valid and R.ID.target.player) and ({skincolor_redteam, skincolor_blueteam})[R.ID.target.player.ctfteam]) or
-						SKINCOLOR_MAGENTA
-					) 
-			   ) or
-			   (B.DiamondGametype() and (
-						D.Diamond and D.Diamond.valid and 
-						(D.Diamond.target and D.Diamond.target.valid and 
-						D.Diamond.target.player and D.Diamond.target.player.skincolor) or D.Diamond.color
-					)
-			   ) or
-			   (B.CPGametype() and (
-						(G_GametypeHasTeams() and (
-							((CP.TeamCapAmt[1] > CP.TeamCapAmt[2]) and skincolor_redteam) or
-							((CP.TeamCapAmt[2] > CP.TeamCapAmt[1]) and skincolor_blueteam) or
-							SKINCOLOR_YELLOW
-						)) or
-						(CP.LeadCapPlr and CP.LeadCapPlr.skincolor) or 
-						mo.tracer.player.skincolor
-					)
-			   ) or
-			   (B.BankGametype() and (
-			   			mo.tracer.player.skincolor
-					)
-			   ) or
-			   (B.SuddenDeath and (
-			   			mo.tracer.player.skincolor
-					)
-			   ) or
-			   SKINCOLOR_PITCHBLACK --If it's pitch black, something's probably wrong
+	mo.color = color or SKINCOLOR_PITCHBLACK
 	local x = mo.tracer.x
 	local y = mo.tracer.y
 	local z = mo.tracer.z
 	if not(target) then
-		target = mo.target
+		target = mo
 	end
 	local rx = target.x
 	local ry = target.y

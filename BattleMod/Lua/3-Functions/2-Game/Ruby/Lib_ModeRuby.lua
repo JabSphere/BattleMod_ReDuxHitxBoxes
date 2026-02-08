@@ -27,17 +27,27 @@ R.GameControl = function()
 	end
 	for player in players.iterate do
 		if player and player.mo and player.mo.valid then
-			if R.ID and R.ID.valid and not(player.mo.btagpointer) then
-				player.mo.btagpointer = P_SpawnMobjFromMobj(player.mo, 0, 0, 0, MT_BTAG_POINTER)
-				if player.mo.btagpointer and player.mo.btagpointer.valid then
-					player.mo.btagpointer.tracer = player.mo
-					player.mo.btagpointer.target = R.ID
+			if R.ID and R.ID.valid then
+				if not(player.mo.btagpointer) then
+					player.mo.btagpointer = P_SpawnMobjFromMobj(player.mo, 0, 0, 0, MT_BTAG_POINTER)
+					if player.mo.btagpointer and player.mo.btagpointer.valid then
+						player.mo.btagpointer.tracer = player.mo
+					end
+				end
+
+				if R.ID.target and R.ID.target.valid and R.ID.target.player and R.ID.target.player.gotcrystal then
+					if not(player.mo.btagpointer2) then
+						player.mo.btagpointer2 = P_SpawnMobjFromMobj(player.mo, 0, 0, 0, MT_BTAG_POINTER)
+						if player.mo.btagpointer2 and player.mo.btagpointer2.valid then
+							player.mo.btagpointer2.tracer = player.mo
+							player.mo.btagpointer2.goalpointer = true
+						end
+					end
 				end
 			end
 		end
 	end
 end
-
 R.Reset = function()
 	R.ID = nil
 	R.CheckPoint = nil
@@ -175,6 +185,7 @@ R.Collect = function(mo,toucher,playercansteal)
 	end
 	toucher.spritexscale = toucher.scale
 	toucher.spriteyscale = toucher.scale
+
 	if not(previoustarget) then
 		B.PrintGameFeed(toucher.player," picked up the "..rubytext.."!")
 	elseif toucher.player and previoustarget.player then
