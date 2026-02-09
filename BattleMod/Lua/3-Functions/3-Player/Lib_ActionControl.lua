@@ -69,6 +69,7 @@ B.MasterActionScript = function(player,doaction)
 	--Apply debt cooldowns
 	if player.rings < 0 then
 		player.actiondebt = $+abs(player.rings)
+		player.dodgecooldown = CV.dodgetime.value*TICRATE*3/2
 		player.rings = 0
 	end
 	if player.actiondebt > 0 and player.actionstate == 0 then
