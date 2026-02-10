@@ -121,8 +121,8 @@ B.DoPlayerInteract = function(smo,tmo)
 		zspd[n] = abs(mo[n].momz)
 		ground[n] = P_IsObjectOnGround(mo[n])
 		//Negate current momentum according to launch factor
-		P_InstaThrust(mo[n],R_PointToAngle2(0,0,mo[n].momx,mo[n].momy),B.GetLaunchFactor(spd[n]))
-		mo[n].momz = B.GetLaunchFactor($)
+		--P_InstaThrust(mo[n],R_PointToAngle2(0,0,mo[n].momx,mo[n].momy),B.GetLaunchFactor(spd[n]))
+		--mo[n].momz = B.GetLaunchFactor($)
 	end
 	
 	
@@ -282,17 +282,31 @@ B.DoPlayerInteract = function(smo,tmo)
 	end
 	local override_physics = (op1 or op2)
 	
-	if not (override_physics or deflect) then
+	if not override_physics
 		local function applythrust(n1,n2)
 			if plr[n1] and plr[n1].climbing return end
-			//Apply XY-Thrust
+				local smomxy = FixedHypot(mo[n1].momx,mo[n1].momy)
+				local tmomxy = FixedHypot(mo[n2].momx,mo[n2].momy)
+				if smomxy < 0 then
+					smomxy = ($*-1)
+				end
+				if tmomxy < 0 then
+					tmomxy = ($*-1)
+				end
+				local smomxyz = FixedHypot(mo[n1].momz,smomxy)
+				local tmomxyz = FixedHypot(mo[n2].momz,tmomxy)
+			--Apply XY-Thrust
 			if mo[n1].health then
 				if not(homing[n1])
 					if plr[n1] and P_PlayerInPain(plr[n1])
 						mo[n1].momx = 0
 						mo[n1].momy = 0
 					end
-					P_Thrust(mo[n1],angle[n1],thrust[n1])
+					if smomxyz > tmomxyz
+						P_Thrust(mo[n1],angle[n1],thrust[n1]/2)
+					else
+						P_Thrust(mo[n1],angle[n1],thrust[n1])
+					end
 					if not pain[n1] 
 						P_Thrust(mo[n1],angle[n2]+ANGLE_180,min(speedlimit*mo[n1].scale,thrust2[n1]))
 					end
@@ -303,7 +317,7 @@ B.DoPlayerInteract = function(smo,tmo)
 				end
 			end
 			
-			//Apply Z-Thrust
+			--Apply Z-Thrust
 			if not(pain[n1]) then 
 				if not(homing[n1]) then
 					mo[n1].momz = -1*$+max(
@@ -318,9 +332,9 @@ B.DoPlayerInteract = function(smo,tmo)
 								)
 							)
 						)
-					) //can i make this less messy???
+					) --can i make this less messy???
 				else
-					mo[n1].momz = mo[n2].scale*10
+					mo[n1].momz = mo[n2].scale*12
 				end
 			end
 		end
@@ -332,7 +346,7 @@ B.DoPlayerInteract = function(smo,tmo)
 			local function dorecoil(n1,n2)
 				if plr[n1] and not(plr[n1].climbing or pain[n1] or plr[n1].playerstate != PST_LIVE) and (atk[n2] >= def[n1])
 					then
-					B.DoPlayerFlinch(plr[n1],(thrust[n1] * 2)/(mo[n1].scale * 5), angle[n1], thrust[n1])
+					B.DoPlayerFlinch(plr[n1],((thrust[n1] * 2)/(mo[n1].scale * 5)*4), angle[n1], thrust[n1])
 				end
 			end
 			

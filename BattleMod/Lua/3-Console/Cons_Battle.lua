@@ -16,7 +16,7 @@ CV.CollisionTimer = CV_RegisterVar{
 
 CV.LaunchFactor = CV_RegisterVar{
 	name = "battle_launchfactor",
-	defaultvalue = 7,
+	defaultvalue = 9,
 	flags = CV_NETVAR,
 	PossibleValue = {MIN = 1, MAX = 20}
 }
