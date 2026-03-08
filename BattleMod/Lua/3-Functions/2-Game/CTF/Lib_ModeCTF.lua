@@ -88,7 +88,7 @@ F.TouchFlag = function(mo, pmo)
 	
 	if player.powers[pw_flashing]
 		player.powers[pw_flashing] = max($,2)
-		P_Thrust(pmo, angle + ANGLE_180, mo.scale*4)
+		--P_Thrust(pmo, angle + ANGLE_180, mo.scale*4)
 	end
 end
 
