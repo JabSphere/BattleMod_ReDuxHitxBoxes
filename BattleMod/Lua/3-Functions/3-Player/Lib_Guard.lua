@@ -66,6 +66,7 @@ B.Guard = function(player,buttonpressed)
 			end
 			local i = P_SpawnMobj(mo.x,mo.y,mo.z,MT_INSTASHIELD)
 			if i and i.valid
+				i.guardfx = true
 				i.target = mo
 			end
 			//make runners pay rings and apply cooldown for guard in battle tag
@@ -242,8 +243,12 @@ end
 //flip instashield stuff if the player is flipped
 
 B.InstaFlip = function(inst)
-	if inst.target
+	if inst.target and inst.target.valid then
 		inst.eflags = ((inst.target.eflags & MFE_VERTICALFLIP) and ($1|MFE_VERTICALFLIP) or ($1 & ~MFE_VERTICALFLIP))
+		if inst.guardfx and inst.target.player and (inst.target.player.guard == 0) then
+			P_RemoveMobj(inst)
+			return
+		end
 	end
 end
 
