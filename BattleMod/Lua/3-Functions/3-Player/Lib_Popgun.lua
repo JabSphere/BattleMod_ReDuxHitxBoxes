@@ -228,7 +228,6 @@ local function newGunslinger(player)
 -- 		end
 	end	
 	if P_IsObjectOnGround(mo) and player.airgun == true
-		print "FANG DEBUG: Landed after shot"
 		player.airgun = false
 		if (player.weapondelay) then
 			player.weapondelay = 0
