@@ -147,9 +147,10 @@ local function newGunslinger(player)
 				)
 
 				if (bullet and bullet.valid)
-					bullet.flags = $1 & ~MF_NOGRAVITY
-					bullet.momx = $1 / 2
-					bullet.momy = $1 / 2
+					-- bullet.flags = $1 & ~MF_NOGRAVITY
+					local speed = max(FixedHypot(bullet.momx, bullet.momy), FixedHypot(mo.momx - player.cmomx, mo.momy - player.cmomy))
+					bullet.momx = P_ReturnThrustX(nil, mo.angle, speed)
+					bullet.momy = P_ReturnThrustY(nil, mo.angle, speed)
 				end
 			--end
 -- 	 			player.gunheld = true
