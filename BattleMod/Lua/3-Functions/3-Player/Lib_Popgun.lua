@@ -162,7 +162,7 @@ local function newGunslinger(player)
 				local angle = R_PointToAngle2(0, 0, bullet.momx, bullet.momy)
 				local aiming = R_PointToAngle2(0, 0, FixedHypot(bullet.momx, bullet.momy), bullet.momz)
 
-				bullet.momx = P_ReturnThrustX(nil, angle, FixedMul(speed, cos(aiming))
+				bullet.momx = P_ReturnThrustX(nil, angle, FixedMul(speed, cos(aiming)))
 				bullet.momy = P_ReturnThrustY(nil, angle, FixedMul(speed, cos(aiming)))
 				bullet.momz = FixedMul(speed, sin(aiming))
 			end
