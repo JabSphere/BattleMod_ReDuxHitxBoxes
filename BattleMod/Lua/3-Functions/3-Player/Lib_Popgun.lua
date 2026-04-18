@@ -107,12 +107,6 @@ local function newGunslinger(player)
 
 		local lockon = nil
 
-		if player.cmd.buttons & BT_SPIN then
-			player.gunheld = $ + 1
-		else
-			player.gunheld = 0
-		end
-
 		if player.gunheld >= 12 then
 			lockon = B.NewGunLook(player)
 
@@ -120,6 +114,12 @@ local function newGunslinger(player)
 				player.drawangle = R_PointToAngle2(mo.x, mo.y, lockon.x, lockon.y)
 				P_SpawnLockOn(player, lockon, mobjinfo[MT_LOCKON].spawnstate)
 			end
+		end
+
+		if player.cmd.buttons & BT_SPIN then
+			player.gunheld = $ + 1
+		else
+			player.gunheld = 0
 		end
 		//Trigger firing action
 		if not (player.cmd.buttons & BT_SPIN)
@@ -230,8 +230,8 @@ local function newGunslinger(player)
 	if P_IsObjectOnGround(mo) and player.airgun == true
 		player.airgun = false
 		if (player.weapondelay) then
-			mo.state = S_PLAY_FIRE_FINISH
-			mo.tics = player.weapondelay
+			player.weapondelay = 0
+			mo.state = S_PLAY_STND
 		end
 	end
 end
