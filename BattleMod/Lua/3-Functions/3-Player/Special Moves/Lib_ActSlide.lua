@@ -11,15 +11,16 @@ B.Action.CombatRoll = function(mo,doaction)
 	//Conditions
 	local bouncing = player.pflags&PF_BOUNCING
 	local activate = player.actiontime == 0 and doaction == 1
-	local thrust_trigger = activate and not(bouncing)
+	local slide_trigger = activate and not(bouncing)
 	local springdrop_trigger = activate and bouncing
 	local drop_state = player.actionstate == 1 and bouncing
 		and P_MobjFlip(mo)*mo.momz < 0
 	local thrust_state = player.actiontime and mo.state == S_PLAY_ROLL
 		and not(P_IsObjectOnGround(mo)) and player.actiontime < 18
-	
+
+	local grounded = P_IsObjectOnGround(mo) or mo.eflags & MFE_JUSTHITFLOOR
 	//Properties
-	player.actiontext = "Combat Roll"
+	player.actiontext = "Slide"
 	player.actionrings = 5
 	if player.pflags&PF_BOUNCING
 		player.actiontext = "Spring Drop"
@@ -27,7 +28,7 @@ B.Action.CombatRoll = function(mo,doaction)
 	end
 	
 	//Perform Thrust
-	if thrust_trigger
+	if slide_trigger
 		//Apply cost, cooldown, state
 		B.PayRings(player)
 		player.actionstate = 2

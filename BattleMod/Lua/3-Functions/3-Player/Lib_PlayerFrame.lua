@@ -177,8 +177,7 @@ B.PlayerThinkFrame = function(player)
 	B.PlayerMovementControl(player)
 	
 	--Perform Actions
-	local doaction = B.ButtonCheck(player,player.battleconfig_special)
-	B.MasterActionScript(player,doaction)
+	B.MasterActionScript(player,B.ButtonCheck(player,player.battleconfig_special),1)
 	
 	--Air dodge, Stun Break, Guard
 	local doguard = B.ButtonCheck(player,player.battleconfig_guard)
