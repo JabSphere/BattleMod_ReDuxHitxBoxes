@@ -103,17 +103,27 @@ local function newGunslinger(player)
 		-- Same code as vanilla, but without the clause for speed.
 		-- You naturally lose your speed via friction.
 		-- v10 EDIT: Now Fang automatically looks towards lockons
-		-- v10 EDIT: KILL ALL LOCKONS
+		-- v10 EDIT 2: i gave fang autoaim if he holds lol
 
-		--[[local lockon = B.NewGunLook(player)
-		if (lockon and lockon.valid)
-			player.drawangle = R_PointToAngle2(mo.x, mo.y, lockon.x, lockon.y)
-			P_SpawnLockOn(player, lockon, mobjinfo[MT_LOCKON].spawnstate)
-		end]]
+		local lockon = nil
+
+		if player.cmd.buttons & BT_SPIN then
+			player.gunheld = $ + 1
+		else
+			player.gunheld = 0
+		end
+
+		if player.gunheld >= 12 then
+			lockon = B.NewGunLook(player)
+
+			if (lockon and lockon.valid) then
+				player.drawangle = R_PointToAngle2(mo.x, mo.y, lockon.x, lockon.y)
+				P_SpawnLockOn(player, lockon, mobjinfo[MT_LOCKON].spawnstate)
+			end
+		end
 		//Trigger firing action
-		if (player.cmd.buttons & BT_SPIN)
--- 		and not (player.gunheld)
-		and not(player.buttonhistory&BT_SPIN)
+		if not (player.cmd.buttons & BT_SPIN)
+		and (player.buttonhistory&BT_SPIN)
 			local bullet = nil
 
 			mo.state = S_PLAY_FIRE
@@ -127,7 +137,7 @@ local function newGunslinger(player)
 				P_StartQuake(4*FRACUNIT,1)
 			end
 			
-			--[[if (lockon and lockon.valid)
+			if (lockon and lockon.valid)
 				mo.angle = R_PointToAngle2(mo.x, mo.y, lockon.x, lockon.y)
 				bullet = P_SpawnPointMissile(
 					mo,
@@ -135,8 +145,7 @@ local function newGunslinger(player)
 					player.revitem,
 					mo.x, mo.y, zpos(mo, player.revitem)
 				)
-
-			else]]
+			else
 				bullet = P_SpawnPointMissile(
 					mo,
 					mo.x + P_ReturnThrustX(nil, mo.angle, FRACUNIT),
@@ -145,15 +154,16 @@ local function newGunslinger(player)
 					player.revitem,
 					mo.x, mo.y, zpos(mo, player.revitem)
 				)
+			end
 
-				if (bullet and bullet.valid)
-					-- bullet.flags = $1 & ~MF_NOGRAVITY
-					local speed = max(FixedHypot(bullet.momx, bullet.momy), FixedHypot(mo.momx - player.cmomx, mo.momy - player.cmomy))
-					bullet.momx = P_ReturnThrustX(nil, mo.angle, speed)
-					bullet.momy = P_ReturnThrustY(nil, mo.angle, speed)
-				end
-			--end
--- 	 			player.gunheld = true
+			if (bullet and bullet.valid)
+				-- bullet.flags = $1 & ~MF_NOGRAVITY
+				local speed = max(26 * mo.scale, FixedHypot(mo.momx - player.cmomx, mo.momy - player.cmomy) * 5 / 4)
+
+				bullet.momx = P_ReturnThrustX(nil, mo.angle, speed)
+				bullet.momy = P_ReturnThrustY(nil, mo.angle, speed)
+			end
+
 			player.drawangle = mo.angle
 			//Air function
 			if not(P_IsObjectOnGround(mo))
@@ -169,6 +179,8 @@ local function newGunslinger(player)
 				P_Thrust(mo,mo.angle+ANGLE_180,mo.scale*3)
 			end
 		end
+	else
+		player.gunheld = 0
 	end
 	//Running and gunning
 	local spd = FixedHypot(player.rmomx,player.rmomy)
@@ -227,6 +239,7 @@ end
 B.CustomGunslinger = function(player)
 	if not(player.mo) return end
 	if not(B.GetSkinVarsFlags(player)&SKINVARS_GUNSLINGER) return end
+
 	//Disallow native CA2_GUNSLINGER functionality
 	if player.charability2 == CA2_GUNSLINGER
 		player.charability2 = CA2_NONE 
@@ -246,11 +259,7 @@ B.CustomGunslinger = function(player)
 	return end
 	//Get inputs
 	if (player.gunheld == nil)
-		player.gunheld = false
-	end
-
-	if not (player.cmd.buttons & BT_SPIN)
-		player.gunheld = false
+		player.gunheld = 0
 	end
 
 	//Do Gunslinger
