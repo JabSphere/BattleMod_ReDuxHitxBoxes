@@ -722,6 +722,10 @@ local function DoWallBounce(mo,player,wallnormangle,walltype,side,reflect)
 	player.glidetime = ($>2 and 2) or 0
 	if not dropdash then
 		player.exhaustmeter = $-((FRACUNIT/2)+(FRACUNIT/8))
+		if player.mo.hummingtop_arrow and player.mo.hummingtop_arrow.valid then
+			P_RemoveMobj(player.mo.hummingtop_arrow)
+			player.mo.hummingtop_arrow = nil
+		end
 	else
 		player.actionstate = 0
 		player.pflags = $|(PF_THOKKED|PF_NOJUMPDAMAGE) & ~(PF_SPINNING|PF_JUMPED)
