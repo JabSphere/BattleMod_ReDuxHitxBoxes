@@ -291,7 +291,9 @@ function B.Sonic_Collide(n1,n2,plr,mo,atk,def,weight,hurt,pain,ground,angle,thru
 		P_InstaThrust(mo[n1], angle[n1], (mo[n1].scale*10) / B.WaterFactor(mo[n1]))
 		B.ZLaunch(mo[n1], 7 * mo[n1].scale, false)
 		--Bump opponent away at our current speed (will probably adjust later)
-		P_InstaThrust(mo[n2], angle[n2], sonic_xyspeed/2)
+		if plr[n2].playerstate == PST_LIVE then
+			P_InstaThrust(mo[n2], angle[n2], sonic_xyspeed/2)
+		end
 
 		plr[n1].glidetime = 2 --Commit time ends
 
