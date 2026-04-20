@@ -175,7 +175,11 @@ local function newGunslinger(player)
 
 				bullet.momx = P_ReturnThrustX(nil, angle, FixedMul(speed, cos(aiming)))
 				bullet.momy = P_ReturnThrustY(nil, angle, FixedMul(speed, cos(aiming)))
-				bullet.momz = FixedMul(speed, sin(aiming))
+				if (lockon and lockon.valid) then
+					bullet.momz = FixedMul(speed, sin(aiming))
+				else
+					bullet.momz = 0
+				end
 			end
 
 			player.drawangle = mo.angle
