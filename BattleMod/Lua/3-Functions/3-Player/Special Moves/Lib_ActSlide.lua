@@ -94,7 +94,10 @@ B.Action.Slide = function(mo,doaction)
 
 		if grounded then
 			player.actiontime = $-1
+		else
+			player.lockjumpframe = max(2, $)
 		end
+
 		if leveltime%8 then
 			P_SpawnGhostMobj(mo)
 		end
@@ -120,14 +123,13 @@ B.Action.Slide = function(mo,doaction)
 		end
 
 		-- custom friction
-		local fric = FU - FU / 150
+		local fric = FU - FU / 100
 		mo.momx = FixedMul($, fric)
 		mo.momy = FixedMul($, fric)
 
 		player.slidebouncex = mo.momx
 		player.slidebouncey = mo.momy
 		player.slidebouncez = abs(mo.momz)
-		mo.angle = player.drawangle
 
 		if player.actiontime == 0
 		or FixedHypot(mo.momx - player.cmomx, mo.momy - player.cmomy) < 4 * mo.scale
@@ -192,13 +194,13 @@ B.Fang_Collide = function(n1,n2,plr,mo,atk,def,weight,hurt,pain,ground,angle,thr
 			mo[n1].momx = $/3
 			mo[n1].momy = $/3
 		else
-			P_InstaThrust(mo[n1], angle[n2], -10 * mo[n1].scale)
-			P_SetObjectMomZ(mo[n1], 8 * mo[n1].scale)
+			P_InstaThrust(mo[n1], angle[n2], -15 * mo[n1].scale)
+			P_SetObjectMomZ(mo[n1], 13 * mo[n1].scale)
 			mo[n1].angle = angle[n2]
 			plr[n1].drawangle = angle[n2]
 			plr[n1].actionstate = 0
 			plr[n1].actiontime = 0
-			plr[n1].pflags = ($|PF_JUMPED) & ~PF_SPINNING
+			plr[n1].pflags = ($|PF_JUMPED|PF_STARTJUMP) & ~PF_SPINNING
 			plr[n1].mo.state = S_PLAY_FALL
 			plr[n1].lockjumpframe = 0
 		end
