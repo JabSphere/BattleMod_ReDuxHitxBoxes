@@ -22,15 +22,6 @@ B.Action.Slide = function(mo,doaction)
 	local sliding = player.actionstate == 2
 		and player.actiontime
 
-	-- hax
-	if mo._lastactionstate == 2
-	and player.actionstate == 0
-	and player.actiontime
-	and mo.eflags & MFE_SPRUNG then
-		print("uhuh")
-		player.actionstate = 2
-	end
-
 	//Properties
 	player.actiontext = "Slide"
 	player.actionrings = 5
@@ -99,6 +90,8 @@ B.Action.Slide = function(mo,doaction)
 	end
 
 	if sliding then
+		player.actionsuper = true
+
 		if grounded then
 			player.actiontime = $-1
 		end
@@ -109,6 +102,7 @@ B.Action.Slide = function(mo,doaction)
 		if player.pflags & PF_JUMPED then
 			player.actionstate = 0
 			player.actiontime = 0
+			player.actionsuper = false
 			return
 		end
 
@@ -125,6 +119,11 @@ B.Action.Slide = function(mo,doaction)
 			mo.momy = player.slidebouncey
 		end
 
+		-- custom friction
+		local fric = FU - FU / 150
+		mo.momx = FixedMul($, fric)
+		mo.momy = FixedMul($, fric)
+
 		player.slidebouncex = mo.momx
 		player.slidebouncey = mo.momy
 		player.slidebouncez = abs(mo.momz)
@@ -138,14 +137,15 @@ B.Action.Slide = function(mo,doaction)
 			mo.momy = $/2
 			player.pflags = $ & ~PF_SPINNING
 			player.actionstate = 0
+			player.actionsuper = false
 		end
 	end
 
 	if not player.actionstate then
 		-- for some reason this is being set to 9 upon spawn. why is it doing that
 		player.actiontime = 0
+		player.actionsuper = false
 	end
-	mo._lastactionstate = player.actionstate -- dumb hack to fix the sliding springing thingy
 end
 
 local function fanghop(player)
@@ -188,15 +188,27 @@ B.Fang_Collide = function(n1,n2,plr,mo,atk,def,weight,hurt,pain,ground,angle,thr
 	end
 
 	if (hurt != 1 and n1 == 1) or (hurt != -1 and n1 == 2) then
-		mo[n1].momx = $/3
-		mo[n1].momy = $/3
+		if P_IsObjectOnGround(mo[n1]) then
+			mo[n1].momx = $/3
+			mo[n1].momy = $/3
+		else
+			P_InstaThrust(mo[n1], angle[n2], -10 * mo[n1].scale)
+			P_SetObjectMomZ(mo[n1], 8 * mo[n1].scale)
+			mo[n1].angle = angle[n2]
+			plr[n1].drawangle = angle[n2]
+			plr[n1].actionstate = 0
+			plr[n1].actiontime = 0
+			plr[n1].pflags = ($|PF_JUMPED) & ~PF_SPINNING
+			plr[n1].mo.state = S_PLAY_FALL
+			plr[n1].lockjumpframe = 0
+		end
 
 		if plr[n2] then
 			B.DoPlayerTumble(plr[n2], 50, angle[n1], mo[n1].scale*3, true, true)
 		end
 
 		P_InstaThrust(mo[n2], angle[n2], -mo[n1].scale * 5)
-		B.ZLaunch(mo[n2], 10 * mo[n2].scale, false)
+		B.ZLaunch(mo[n2], 13 * mo[n2].scale, false)
 		return true
 	end
 end
