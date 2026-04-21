@@ -228,7 +228,7 @@ B.Action.Slide_Priority = function(player)
 	if player.actionstate == 1 then
 		B.SetPriority(player,0,1,"fang_springdrop",2,3,"spring drop")
 	elseif player.actionstate == 2 then
-		B.SetPriority(player,0,1,nil,0,1,"fang slide")
+		B.SetPriority(player,0,1,nil,0,1,"slide")
 	end
 end
 
