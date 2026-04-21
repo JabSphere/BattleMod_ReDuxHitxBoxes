@@ -1,6 +1,6 @@
 local B = CBW_Battle
 local S = B.SkinVars
-local cooldown = TICRATE * 2
+local cooldown = TICRATE * 6/2
 local cooldown2 = TICRATE * 5
 local duration = 3 * TICRATE
 local xythrust = 20
@@ -34,9 +34,7 @@ B.Action.Slide = function(mo,doaction)
 	if slide_trigger
 		-- thrust player forward
 		local speed = max(xythrust * mo.scale, FixedHypot(mo.momx - player.cmomx, mo.momy - player.cmomy) * 5 / 4)
-
 		B.PayRings(player)
-		B.ApplyCooldown(player, cooldown2)
 
 		P_InstaThrust(mo, mo.angle, speed)
 		player.slidebouncex = mo.momx
@@ -47,6 +45,13 @@ B.Action.Slide = function(mo,doaction)
 		player.actiontime = duration
 		player.lockjumpframe = nojumpwindow
 		mo.state = S_FANG_SLIDE
+		S_StartSound(mo,sfx_zoom)
+		for n = 0,3
+			local dust = P_SpawnMobjFromMobj(mo,0,0,0,MT_SPINDUST)
+			local angle = (180+P_RandomRange(-60,60))*ANG1+mo.angle
+			local speed = mo.scale*P_RandomRange(5,10)
+			P_InstaThrust(dust,angle,speed)
+		end
 	end
 	
  	//Perform spring drop
@@ -94,6 +99,7 @@ B.Action.Slide = function(mo,doaction)
 
 		if grounded then
 			player.actiontime = $-1
+			S_StartSound(mo,sfx_s3k7e)
 		else
 			player.lockjumpframe = max(2, $)
 		end
@@ -106,6 +112,7 @@ B.Action.Slide = function(mo,doaction)
 			player.actionstate = 0
 			player.actiontime = 0
 			player.actionsuper = false
+			B.ApplyCooldown(player, cooldown)
 			return
 		end
 
@@ -117,6 +124,7 @@ B.Action.Slide = function(mo,doaction)
 		if mo.eflags & MFE_JUSTHITFLOOR then
 			if player.slidebouncez >= 10 * mo.scale then
 				P_SetObjectMomZ(mo, player.slidebouncez/2)
+				S_StartSound(mo,sfx_mario1)
 			end
 			mo.momx = player.slidebouncex
 			mo.momy = player.slidebouncey
@@ -140,6 +148,7 @@ B.Action.Slide = function(mo,doaction)
 			player.pflags = $ & ~PF_SPINNING
 			player.actionstate = 0
 			player.actionsuper = false
+			B.ApplyCooldown(player, cooldown)
 		end
 	end
 
