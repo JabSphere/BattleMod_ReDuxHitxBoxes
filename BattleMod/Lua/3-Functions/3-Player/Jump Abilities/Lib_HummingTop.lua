@@ -177,91 +177,224 @@ function B.HummingTop_AbilitySpecial(player)
 	end
 end
 
+local function cancelHummingTop(player, sound)
+	if player.mo.hummingtop_state == state_spinning then
+		if sound then 
+			S_StartSound(player.mo, sfx_cdfm17)
+		end
+		player.mo.hummingtop_state = nil
+	end
+	
+	
+	if player.mo.hummingtop_overlay and player.mo.hummingtop_overlay.valid then
+		P_RemoveMobj(player.mo.hummingtop_overlay)
+		player.mo.hummingtop_overlay = nil
+	end
+	if player.mo.hummingtop_arrow and player.mo.hummingtop_arrow.valid then
+		P_RemoveMobj(player.mo.hummingtop_arrow)
+		player.mo.hummingtop_arrow = nil
+	end
+	player.mo.hummingtop_angle = nil
+	player.mo.hummingtop_drawangle = nil
+	player.glidetime = 0
+	
+end
+
+local function cancelDropDash(mo)
+	mo.dropdash_actionable = nil
+	mo.dropdash_prep = nil
+	mo.dropdash_momz = nil
+end
+
+local state_superspinjump = 1
+local state_groundpound_rise = 2
+local state_groundpound_fall = 3
+local state_superspinwave = 10 // new
+
 function B.HummingTop_MainHook(player)
 	if charParam(player) then --If we're valid
 	
-		local grounded = P_IsObjectOnGround(player.mo) or (player.mo.eflags & MFE_JUSTHITFLOOR)
+		local mo = player.mo
+
+		local humming = (mo.hummingtop_state == state_spinning)
+		local grounded = P_IsObjectOnGround(mo) or (mo.eflags & MFE_JUSTHITFLOOR)
 		local hurt = P_PlayerInPain(player)
 		local dead = (player.playerstate == PST_DEAD)
 		local carry = (player.powers[pw_carry]) and ((player.powers[pw_carry] != CR_FAN) and (player.powers[pw_carry] != CR_BRAKGOOP))
-		local gp = player.actionstate
+		local gp = (player.actionstate == state_groundpound_rise) or (player.actionstate == state_groundpound_fall)
+		local wave = (player.actionstate == state_superspinwave)
+		local superspinjump = (player.actionstate == state_superspinjump)
 		local airdodge = (player.airdodge >= 1)
-		local ledge = (player.mo.state == S_PLAY_LEDGE_GRAB)
+		local ledge = (mo.state == S_PLAY_LEDGE_GRAB)
 		local flag = player.gotflagdebuff
-		local sprung = (player.mo.eflags & MFE_SPRUNG)
+		local sprung = (mo.eflags & MFE_SPRUNG)
 		local exhaust = (player.exhaustmeter <= 0)
 		local tumble = player.tumble
+		local dropdashable = (mo.dropdash_actionable~=nil)
+		local dropdashing = (mo.dropdash_prep == 100)
+		local inexhausted = (player.exhaustmeter > 0)
+	
+		local recurlable = (mo.recurl_actionable == true)
+		local spin = (player.pflags & PF_SPINDOWN)
 
+		local cancel = grounded or hurt or dead or carry or gp or wave or airdodge or ledge or exhaust or flag or tumble
 
+		if grounded then
+			if dropdashing then
+				mo.state = S_PLAY_ROLL
+				player.pflags = $1|PF_SPINNING
+				S_StartSound(mo, sfx_zoom, player)
+				local speed = abs(mo.dropdash_momz/2)+FixedHypot(player.rmomx,player.rmomy)
+				local actionspd = player.actionspd
+				if player.powers[pw_super] then
+					actionspd = $*3/2
+				end
+				if mo.eflags&MFE_UNDERWATER then actionspd = $*2/3 end
+
+				actionspd = FixedMul(mo.scale, $)
+
+				P_InstaThrust(mo, mo.angle,max(actionspd,speed))
+
+				if player.pflags & PF_ANALOGMODE then
+					player.mo.angle = $
+				end
+				
+				//Dust
+				local function r(mo,value)
+					local w = mo.radius/FRACUNIT/2
+					return value+P_RandomRange(-w,w)*FRACUNIT
+				end
+				for n = 1,4
+					local d = P_SpawnMobj(r(mo,mo.x),r(mo,mo.y),mo.z,MT_SPINDUST)
+					d.extravalue1 = FRACUNIT
+					d.extravalue2 = FRACUNIT
+					if P_MobjFlip(mo) == -1 then
+						d.eflags = $|MFE_VERTICALFLIP
+					end
+					P_SetObjectMomZ(d,FRACUNIT*2)
+					local l = 90*n/4
+					P_InstaThrust(d,mo.angle+ANGLE_135+l*ANG1,actionspd/2)
+				end
+			end
+			cancelDropDash(mo)
+		end
+
+		if humming then
+			if cancel then
+				cancelHummingTop(player, true)
+			end
+			if recurlable and spin and inexhausted and not(cancel) then
+				cancelHummingTop(player, false)
+				player.pflags = ($|PF_JUMPED) & ~(PF_NOJUMPDAMAGE|PF_SPINNING|PF_THOKKED)
+				S_StartSound(mo, sfx_zoom)
+				mo.state = S_PLAY_ROLL
+				mo.dropdash_actionable = 0
+				mo.recurl_actionable = nil
+				player.exhaustmeter = $-((FRACUNIT/2)+(FRACUNIT/8))
+			end
+		end
+
+		if dropdashable and not(cancel) then
+			if spin then
+				if (mo.dropdash_prep or 0) < 100
+					mo.dropdash_prep = ($==nil and 100/10) or $+100/10
+					if mo.dropdash_prep >= 100
+						S_StartSound(mo, sfx_drpdsh)
+						mo.dropdash_prep = 100
+					end
+				end
+				if mo.dropdash_prep == 100
+				
+					local mo = mo
+
+					local zheight = mo.z - FixedDiv(P_GetPlayerHeight(player) - mo.height, 3*FRACUNIT)
+					if (mo.eflags & MFE_VERTICALFLIP)
+						zheight = mo.z + mo.height + FixedDiv(P_GetPlayerHeight(player) - mo.height, 3*FRACUNIT) - FixedMul(mobjinfo[MT_THOK].height, mo.scale)
+					end
+					
+					if (not (mo.eflags & MFE_VERTICALFLIP)
+					and (zheight < mo.floorz)
+					and not (mobjinfo[MT_THOK].flags & MF_NOCLIPHEIGHT))
+						zheight = mo.floorz
+					elseif (mo.eflags & MFE_VERTICALFLIP and zheight + FixedMul(mobjinfo[MT_THOK].height, mo.scale) > mo.ceilingz and not (mobjinfo[MT_THOK].flags & MF_NOCLIPHEIGHT))
+						zheight = mo.ceilingz - FixedMul(mobjinfo[MT_THOK].height, mo.scale)
+					end
+					
+					local trail = P_SpawnGhostMobj(mo)
+					P_MoveOrigin(trail, trail.x, trail.y, zheight)
+					trail.fuse = 30
+					trail.state = S_THOK
+					trail.frame = TR_TRANS70|A
+					trail.destscale = 0
+					trail.spritexscale = mo.spritexscale
+					trail.spriteyscale = mo.spriteyscale
+
+					mo.dropdash_momz = mo.momz
+					mo.frame = 0
+					mo.sprite = SPR_PLAY
+					mo.sprite2 = SPR2_DRPD
+					mo.dropdash_actionable = (($<(skins[mo.skin].sprites[SPR2_DRPD].numframes)-1) and $+1) or 0
+					mo.frame = mo.dropdash_actionable
+				end
+			else
+				mo.state = $
+				cancelDropDash(mo)
+			end
+		end
+
+			
 		
-		if grounded or hurt or dead or carry or gp or airdodge or ledge or exhaust or flag or tumble then
+
+
+
 			
-			if player.mo.hummingtop_state == state_spinning then
-				S_StartSound(player.mo, sfx_cdfm17)
-			end
-			
-			
-			player.mo.hummingtop_state = nil
-			if player.mo.hummingtop_overlay and player.mo.hummingtop_overlay.valid then
-				P_RemoveMobj(player.mo.hummingtop_overlay)
-				player.mo.hummingtop_overlay = nil
-			end
-			if player.mo.hummingtop_arrow and player.mo.hummingtop_arrow.valid then
-				P_RemoveMobj(player.mo.hummingtop_arrow)
-				player.mo.hummingtop_arrow = nil
-			end
-			player.mo.hummingtop_angle = nil
-			player.mo.hummingtop_drawangle = nil
-			player.glidetime = 0
-		end
-			
-		if player.mo.hummingtop_arrow and player.mo.hummingtop_arrow.valid then
-			applyFlip(player.mo, player.mo.hummingtop_arrow)
-			P_MoveOrigin(player.mo.hummingtop_arrow, player.mo.x+cos(player.mo.hummingtop_angle)*ARROW_DIST, player.mo.y+sin(player.mo.hummingtop_angle)*ARROW_DIST, getMiddle(player.mo, player.mo.hummingtop_arrow.height))
+		if mo.hummingtop_arrow and mo.hummingtop_arrow.valid then
+			applyFlip(mo, mo.hummingtop_arrow)
+			P_MoveOrigin(mo.hummingtop_arrow, mo.x+cos(mo.hummingtop_angle)*ARROW_DIST, mo.y+sin(mo.hummingtop_angle)*ARROW_DIST, getMiddle(mo, mo.hummingtop_arrow.height))
 		end
 
-		if player.mo.hummingtop_state == state_spinning then --Launching?
+		if mo.hummingtop_state == state_spinning then --Launching?
 			--Launch forwards and upwards, so Sonic can't just thok into the ground
 
 			if player.glidetime == 1 then
 				player.glidetime = (B.Console.HTop_Commit.value)+2
 			end
 
-			if player.mo.hummingtop_overlay and player.mo.hummingtop_overlay.valid then
-				player.mo.hummingtop_overlay.renderflags = $|RF_FULLBRIGHT
-				player.mo.hummingtop_overlay.blendmode = AST_ADD
-				applyFlip(player.mo, player.mo.hummingtop_overlay)
-				player.mo.hummingtop_overlay.dispoffset = 3
-				P_MoveOrigin(player.mo.hummingtop_overlay, player.mo.x, player.mo.y, getMiddle(player.mo, mobjinfo[MT_DUST].height))
-				player.mo.hummingtop_overlay.fuse = max($, 2)
-				player.mo.hummingtop_overlay.scale = (player.mo.scale) + (player.mo.scale)/2
-				--player.mo.hummingtop_overlay.colorized = G_GametypeHasTeams()
-				player.mo.hummingtop_overlay.color = windcolor(player)
-				if player.mo.hummingtop_overlay.state != S_HUMMINGTOP then
-					player.mo.hummingtop_overlay.state = S_HUMMINGTOP
+			if mo.hummingtop_overlay and mo.hummingtop_overlay.valid then
+				mo.hummingtop_overlay.renderflags = $|RF_FULLBRIGHT
+				mo.hummingtop_overlay.blendmode = AST_ADD
+				applyFlip(mo, mo.hummingtop_overlay)
+				mo.hummingtop_overlay.dispoffset = 3
+				P_MoveOrigin(mo.hummingtop_overlay, mo.x, mo.y, getMiddle(mo, mobjinfo[MT_DUST].height))
+				mo.hummingtop_overlay.fuse = max($, 2)
+				mo.hummingtop_overlay.scale = (mo.scale) + (mo.scale)/2
+				--mo.hummingtop_overlay.colorized = G_GametypeHasTeams()
+				mo.hummingtop_overlay.color = windcolor(player)
+				if mo.hummingtop_overlay.state != S_HUMMINGTOP then
+					mo.hummingtop_overlay.state = S_HUMMINGTOP
 				end
-				player.mo.frame = 0
-				player.mo.sprite = SPR_PLAY
-				player.mo.sprite2 = SPR2_TRIK
-				player.drawangle = player.mo.hummingtop_drawangle
-				player.mo.hummingtop_drawangle = $-ANGLE_45
+				mo.frame = 0
+				mo.sprite = SPR_PLAY
+				mo.sprite2 = SPR2_TRIK
+				player.drawangle = mo.hummingtop_drawangle
+				mo.hummingtop_drawangle = $-ANGLE_45
 			end
 			
 			if (player.glidetime > 2) and (player.glidetime <= (B.Console.HTop_Commit.value)+2) then
 				player.powers[pw_nocontrol] = max($, 2)
-				player.mo.momz = 0
+				mo.momz = 0
 				player.cmd.buttons = player.realbuttons
 				player.cmd.angleturn = player.realangleturn
 				player.glidetime = $-1
 				player.canguard = false
 			elseif player.glidetime == 2 then
-				B.SpawnFlash(player.mo, 10, false)
-				if player.mo.hummingtop_overlay and player.mo.hummingtop_overlay.valid then
-					local ghost = P_SpawnGhostMobj(player.mo.hummingtop_overlay)
+				B.SpawnFlash(mo, 10, false)
+				if mo.hummingtop_overlay and mo.hummingtop_overlay.valid then
+					local ghost = P_SpawnGhostMobj(mo.hummingtop_overlay)
 					ghost.tics = 10
 					ghost.colorized = true
 				end
-				S_StartSound(player.mo, sfx_s3k42)
+				S_StartSound(mo, sfx_s3k42)
 				player.glidetime = 0
 			end
 		end
@@ -301,6 +434,8 @@ function B.Sonic_PostCollide(n1,n2,plr,mo,atk,def,weight,hurt,pain,ground,angle,
 			plr[n1].glidetime = 2 --Commit time ends
 
 			collisiontype = (bump and 1) or 3
+
+			mo[n1].recurl_actionable = true
 			return
 		else
 			--Normal interaction
@@ -398,15 +533,13 @@ local function VectorBounce(mo,vmom,vslopenorm,percent)
 	mo.momz = vbounce.z
 end
 
-local state_superspinjump = 1
-local state_dropdash = 20
 local param = function(player)
 	return player 
 	and player.mo 
 	and player.mo.valid 
 	and (
 			(player.mo.hummingtop_state == state_spinning)
-	     or (player.actionstate == state_dropdash)
+	     or (player.mo.dropdash_prep == 100)
 		 --or (player.actionstate == state_superspinjump)
 	)
 end
@@ -547,7 +680,7 @@ local function DoWallBounce(mo,player,wallnormangle,walltype,side,reflect)
 
 	--Hold jump button for better bounce, don't hold for small bounce
 	local bigbounce = true--(player.pflags & PF_JUMPDOWN)
-	local dropdash = (player.actionstate == state_dropdash)-- or (player.actionstate == state_superspinjump)
+	local dropdash = (mo.dropdash_prep == 100)-- or (player.actionstate == state_superspinjump)
 	
 	--Calculate angle
 	local vwallnorm = SphereToCartesian(wallnormangle, 0)
@@ -627,8 +760,8 @@ local function DoWallBounce(mo,player,wallnormangle,walltype,side,reflect)
 			S_StartSound(mo,sfx_cdfm62)
 		end
 	else
-		wallth = FixedMul(mo.scale, ((player.maxdash/6)))
-		bouncez = wallth/4
+		wallth = FixedMul(mo.scale, ((player.maxdash/7)))
+		bouncez = FixedMul(mo.scale, ((player.maxdash/6)))
 	end
 	
 	--Do the horizontal bounce
@@ -720,6 +853,7 @@ local function DoWallBounce(mo,player,wallnormangle,walltype,side,reflect)
 	end
 	player.glidetime = ($>2 and 2) or 0
 	if not dropdash then
+		player.mo.recurl_actionable = true
 		player.exhaustmeter = $-((FRACUNIT/2)+(FRACUNIT/8))
 		if player.mo.hummingtop_arrow and player.mo.hummingtop_arrow.valid then
 			P_RemoveMobj(player.mo.hummingtop_arrow)
@@ -731,6 +865,7 @@ local function DoWallBounce(mo,player,wallnormangle,walltype,side,reflect)
 		player.mo.state = S_PLAY_SPRING
 	end
 	S_StartSound(mo, (dropdash and sfx_zoom) or sfx_bounc1)
+	cancelDropDash(mo)
 end
 
 B.Sonic_HTopMoveBlocked = function(mo)

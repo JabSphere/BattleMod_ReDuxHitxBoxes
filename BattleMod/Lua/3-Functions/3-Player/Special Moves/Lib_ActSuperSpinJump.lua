@@ -6,7 +6,6 @@ local state_superspinjump = 1
 local state_groundpound_rise = 2
 local state_groundpound_fall = 3
 local state_superspinwave = 10 // new
-local state_dropdash = 20 --Newer
 local jumpthrust = 42*FRACUNIT
 local recoilthrust = 22*FRACUNIT
 local pound_startthrust = 10*FRACUNIT
@@ -15,15 +14,6 @@ local jumpfriction = FRACUNIT*9/10
 local poundfriction = FRACUNIT
 local reboundthrust = 13
 local gp_distance = FRACUNIT*200
-local dropdash_charge = 5
-
-local resetDropDash = function(mo)
-	mo.state = $
-	mo.dropdash_charge = nil
-	mo.player.actionstate = 0
-	mo.player.actiontime = 0
-	mo.player.pflags = $ & ~(PF_THOKKED)
-end
 
 B.Action.SuperSpinJump_Priority = function(player)
 	local mo = player.mo
@@ -55,7 +45,6 @@ B.Action.SuperSpinJump=function(mo,doaction)
 	if player.actionstate == 0 and not(player.exiting) then
 		mo.spritexscale = FRACUNIT
 		mo.spriteyscale = FRACUNIT
-		mo.dropdash_charge = nil
 	end
 	
 	if not(B.CanDoAction(player)) then
@@ -63,7 +52,6 @@ B.Action.SuperSpinJump=function(mo,doaction)
 		if not player.exiting then
 			mo.spritexscale = FRACUNIT
 			mo.spriteyscale = FRACUNIT
-			mo.dropdash_charge = nil
 		end
 	return end
 
@@ -91,9 +79,6 @@ B.Action.SuperSpinJump=function(mo,doaction)
 	elseif P_IsObjectOnGround(mo) or player.mo.state == S_PLAY_LEDGE_GRAB or player.actionstate == state_superspinjump then
 		player.actiontext = "Super Spin Jump"
 		player.actionrings = 10
-	elseif (player.actionstate == state_dropdash)
-		player.actiontext = "Drop Dash"
-		player.actionrings = 0
 	else
 		player.actiontext = "Ground Pound"
 		player.actionrings = 10
@@ -232,20 +217,23 @@ B.Action.SuperSpinJump=function(mo,doaction)
 		B.ControlThrust(mo,FRACUNIT,nil,jumpfriction,nil)
 		mo.spritexscale = max(FRACUNIT * 4/5, min($ + FRACUNIT/30, FRACUNIT))
 		mo.spriteyscale = max(FRACUNIT, min($ - FRACUNIT/30, FRACUNIT * 5/4))
+
 		
 		//Restore ability after end-rising
 		if mo.momz*P_MobjFlip(mo) < 0 then 
+			if (player.pflags & PF_SPINDOWN) then
+				S_StartSound(mo, sfx_drpdsh)
+				mo.dropdash_prep = 100
+				mo.dropdash_actionable = 0
+				mo.dropdash_momz = mo.momz
+			end
+
 			mo.state = S_PLAY_ROLL
 			player.pflags = $&~(PF_THOKKED)
 			if not P_IsObjectOnGround(mo) then
 				player.pflags = $|PF_JUMPED
 			end
 			player.actionstate = 0--((doaction == 2) and state_dropdash) or 0
-		end
-
-		if (player.actionstate == 0) and (doaction == 2) then
-			player.actionstate = state_dropdash
-			player.actiontime = -1
 		end
 
 		if P_IsObjectOnGround(mo) then
@@ -273,57 +261,6 @@ B.Action.SuperSpinJump=function(mo,doaction)
 			player.actionstate = 0
 		end
 	end
-
-	if player.actionstate == state_dropdash then
-		if (doaction == 2) then
-
-			if player.actiontime == -1 then
-				S_StartSound(mo, sfx_recurl)
-				player.actiontime = 0
-			end
-
-			player.actiontime = (($<(skins[mo.skin].sprites[SPR2_DRPD].numframes)-1) and $+1) or 0
-			
-			mo.frame = 0
-			mo.sprite = SPR_PLAY
-			mo.sprite2 = SPR2_DRPD
-			mo.frame = player.actiontime
-
-			if (mo.eflags & MFE_JUSTHITFLOOR) and not(mo.eflags & MFE_SPRUNG) then
-				player.pflags = $|PF_SPINNING
-				S_StartSound(mo, sfx_zoom, player)
-				local dashspeed = ((player.maxdash/10)*7)/water
-				local speed = FixedHypot(player.rmomx, player.rmomy)
-				local angle = mo.angle
-				P_InstaThrust(mo, angle, max(dashspeed,speed))
-				mo.angle = angle
-				mo.state = S_PLAY_ROLL
-				player.actionstate = 0
-				player.actiontime = 0
-
-
-				//Dust
-				local function r(mo,value)
-					local w = mo.radius/FRACUNIT/2
-					return value+P_RandomRange(-w,w)*FRACUNIT
-				end
-				for n = 1,4
-					local d = P_SpawnMobj(r(mo,mo.x),r(mo,mo.y),mo.z,MT_SPINDUST)
-					d.extravalue1 = FRACUNIT
-					d.extravalue2 = FRACUNIT
-					if P_MobjFlip(mo) == -1 then
-						d.eflags = $|MFE_VERTICALFLIP
-					end
-					P_SetObjectMomZ(d,FRACUNIT*2)
-					local l = 90*n/4
-					P_InstaThrust(d,mo.angle+ANGLE_135+l*ANG1,dashspeed/2)
-				end
-			end
-		else
-			resetDropDash(mo)
-		end
-	end
-
 
 	//vfx
 	if player.actionstate and player.pflags&PF_JUMPED then
