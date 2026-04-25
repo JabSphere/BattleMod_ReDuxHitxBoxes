@@ -174,6 +174,7 @@ local ARROW_INVERTSCALE = 2
 //thinker for pointer
 B.BattleTagPointers = function(mo)
 	local hide = false
+	local delete = false
 	local arrowscale = ARROW_TAGSCALE
 	local target = mo.target
 	local color = SKINCOLOR_NONE
