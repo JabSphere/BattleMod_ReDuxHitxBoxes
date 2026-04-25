@@ -307,7 +307,7 @@ function B.HummingTop_MainHook(player)
 						mo.dropdash_prep = 100
 					end
 				end
-				if mo.dropdash_prep == 100
+				if (mo.dropdash_prep == 100) then
 				
 					local mo = mo
 
