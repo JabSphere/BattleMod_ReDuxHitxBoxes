@@ -340,6 +340,9 @@ function B.HummingTop_MainHook(player)
 					mo.dropdash_actionable = (($<(skins[mo.skin].sprites[SPR2_DRPD].numframes)-1) and $+1) or 0
 					mo.frame = mo.dropdash_actionable
 				end
+				if humming or sprung then
+					cancelDropDash(mo)
+				end
 			else
 				mo.state = $
 				cancelDropDash(mo)
