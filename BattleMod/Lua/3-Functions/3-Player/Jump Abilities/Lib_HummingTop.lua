@@ -442,7 +442,7 @@ function B.Sonic_PostCollide(n1,n2,plr,mo,atk,def,weight,hurt,pain,ground,angle,
 			P_InstaThrust(mo[n1], angle[n1], (mo[n1].scale*10) / B.WaterFactor(mo[n1]))
 			B.ZLaunch(mo[n1], 7 * mo[n1].scale, false)
 			--Bump opponent away at our current speed (will probably adjust later)
-			if plr[n2].playerstate == PST_LIVE then
+			if (plr[n2] and plr[n2].playerstate == PST_LIVE) or not(plr[n2]) then
 				P_InstaThrust(mo[n2], angle[n2], sonic_xyspeed/3)
 			end
 
