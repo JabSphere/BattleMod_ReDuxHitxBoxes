@@ -3,10 +3,19 @@ freeslot(
 	's_fangchar_lob1',
 	's_fangchar_lob2',
 	's_fangchar_lob3',
+	's_fang_slide',
 	'spr_cbom',
 	's_colorbomb1',
 	's_colorbomb2'
 )
+
+states[S_FANG_SLIDE] = {
+	sprite = SPR_PLAY,
+	frame = SPR2_FLY_,
+	tics = -1,
+	nextstate = S_PLAY_STND,
+	action = function(mo) mo.player.panim = PA_ROLL end
+}
 
 //Fang lob animation
 states[S_FANGCHAR_LOB1] = {

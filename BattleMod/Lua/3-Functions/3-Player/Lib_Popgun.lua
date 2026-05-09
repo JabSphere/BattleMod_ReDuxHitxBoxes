@@ -1,6 +1,7 @@
 //Original scripts by TehRealSalt, modified by CobaltBW
 
 local B = CBW_Battle
+local S = B.SkinVars
 
 local refiretime = 18
 
@@ -92,34 +93,55 @@ end
 
 local function newGunslinger(player)
 	local mo = player.mo
+	local skin = S[mo.skin] or S[-1]
 	local onground = P_IsObjectOnGround(mo)
 	local canstand = true
+
+	local sliding = skin.special == B.Action.Slide
+		and player.actionstate == 2
 	
 	//State: ready to gunsling
 	if not ((player.pflags & (PF_SLIDING|PF_BOUNCING|PF_THOKKED)) or (player.exiting) or (P_PlayerInPain(player)))
 	and not (player.weapondelay)
 	and not (player.panim == PA_ABILITY2)
-	and (player.pflags&PF_JUMPED or onground)
+	and (player.pflags&PF_JUMPED or onground or sliding) then
 		-- Same code as vanilla, but without the clause for speed.
 		-- You naturally lose your speed via friction.
 		-- v10 EDIT: Now Fang automatically looks towards lockons
+		-- v10 EDIT 2: i gave fang autoaim if he holds lol
 
-		local lockon = B.NewGunLook(player)
-		if (lockon and lockon.valid)
-			player.drawangle = R_PointToAngle2(mo.x, mo.y, lockon.x, lockon.y)
-			P_SpawnLockOn(player, lockon, mobjinfo[MT_LOCKON].spawnstate)
+		local lockon = nil
+
+		if player.gunheld >= 12 then
+			lockon = B.NewGunLook(player)
+
+			if (lockon and lockon.valid) then
+				player.drawangle = R_PointToAngle2(mo.x, mo.y, lockon.x, lockon.y)
+				P_SpawnLockOn(player, lockon, mobjinfo[MT_LOCKON].spawnstate)
+			end
+		end
+
+		if player.cmd.buttons & BT_SPIN then
+			player.gunheld = $ + 1
+		else
+			player.gunheld = 0
 		end
 		//Trigger firing action
-		if (player.cmd.buttons & BT_SPIN)
--- 		and not (player.gunheld)
-		and not(player.buttonhistory&BT_SPIN)
+		if not (player.cmd.buttons & BT_SPIN)
+		and (player.buttonhistory&BT_SPIN)
 			local bullet = nil
+
+			if sliding then
+				player.actionstate = 0
+				player.actiontime = 0
+				player.pflags = $ & ~PF_SPINNING
+			end
 
 			mo.state = S_PLAY_FIRE
 			player.panim = PA_ABILITY2
 			player.weapondelay = refiretime
-			mo.momx = $ * 2/3
-			mo.momy = $ * 2/3
+			mo.momx = $ * 3/4
+			mo.momy = $ * 3/4
 			S_StartSoundAtVolume(mo,sfx_s1c4,150)
 			
 			if player == consoleplayer
@@ -134,7 +156,6 @@ local function newGunslinger(player)
 					player.revitem,
 					mo.x, mo.y, zpos(mo, player.revitem)
 				)
-
 			else
 				bullet = P_SpawnPointMissile(
 					mo,
@@ -144,14 +165,23 @@ local function newGunslinger(player)
 					player.revitem,
 					mo.x, mo.y, zpos(mo, player.revitem)
 				)
+			end
 
-				if (bullet and bullet.valid)
-					bullet.flags = $1 & ~MF_NOGRAVITY
-					bullet.momx = $1 / 2
-					bullet.momy = $1 / 2
+			if (bullet and bullet.valid)
+				-- bullet.flags = $1 & ~MF_NOGRAVITY
+				local speed = max(45 * mo.scale, FixedHypot(mo.momx - player.cmomx, mo.momy - player.cmomy) * 3 / 4)
+				local angle = R_PointToAngle2(0, 0, bullet.momx, bullet.momy)
+				local aiming = R_PointToAngle2(0, 0, FixedHypot(bullet.momx, bullet.momy), bullet.momz)
+
+				bullet.momx = P_ReturnThrustX(nil, angle, FixedMul(speed, cos(aiming)))
+				bullet.momy = P_ReturnThrustY(nil, angle, FixedMul(speed, cos(aiming)))
+				if (lockon and lockon.valid) then
+					bullet.momz = FixedMul(speed, sin(aiming))
+				else
+					bullet.momz = 0
 				end
 			end
--- 	 			player.gunheld = true
+
 			player.drawangle = mo.angle
 			//Air function
 			if not(P_IsObjectOnGround(mo))
@@ -167,6 +197,8 @@ local function newGunslinger(player)
 				P_Thrust(mo,mo.angle+ANGLE_180,mo.scale*3)
 			end
 		end
+	else
+		player.gunheld = 0
 	end
 	//Running and gunning
 	local spd = FixedHypot(player.rmomx,player.rmomy)
@@ -216,8 +248,8 @@ local function newGunslinger(player)
 	if P_IsObjectOnGround(mo) and player.airgun == true
 		player.airgun = false
 		if (player.weapondelay) then
-			mo.state = S_PLAY_FIRE_FINISH
-			mo.tics = player.weapondelay
+			player.weapondelay = 0
+			mo.state = S_PLAY_STND
 		end
 	end
 end
@@ -225,6 +257,7 @@ end
 B.CustomGunslinger = function(player)
 	if not(player.mo) return end
 	if not(B.GetSkinVarsFlags(player)&SKINVARS_GUNSLINGER) return end
+
 	//Disallow native CA2_GUNSLINGER functionality
 	if player.charability2 == CA2_GUNSLINGER
 		player.charability2 = CA2_NONE 
@@ -235,20 +268,20 @@ B.CustomGunslinger = function(player)
 		player.airgun = false
 	return end
 
+	local skin = S[player.mo.skin] or S[-1]
+	local sliding = skin.special == B.Action.Slide
+		and player.actionstate == 2
+
 	//Unable to use gun during certain states
 	if player.powers[pw_nocontrol]
 	or player.powers[pw_carry]
-	or player.actionstate
-	or player.pflags&PF_SPINNING
+	or (player.actionstate and not sliding)
+	or (player.pflags&PF_SPINNING and not sliding)
 		player.airgun = false
 	return end
 	//Get inputs
 	if (player.gunheld == nil)
-		player.gunheld = false
-	end
-
-	if not (player.cmd.buttons & BT_SPIN)
-		player.gunheld = false
+		player.gunheld = 0
 	end
 
 	//Do Gunslinger

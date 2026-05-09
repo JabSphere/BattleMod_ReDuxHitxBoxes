@@ -125,6 +125,7 @@ addHook("JumpSpecial",function(player)
 	if (player.powers[pw_carry]) or player.battlespawning then return end
 	if B.TwinSpinJump(player) then return true end
 	if B.RingSparkCheck(player) then return true end
+	if B.Fang_SlideJump(player) then return true end
 end)
 
 addHook("SpinSpecial",function(player)
@@ -147,6 +148,10 @@ addHook("PlayerThink", function(player)
 	B.GlideSound(player)
 	B.AutoSpectator(player)
 	B.DiminishingMomentum(player)
+
+	--Perform Actions
+	B.MasterActionScript(player,B.ButtonCheck(player,player.battleconfig_special),0)
+	
 	-- Spring checks (Should this be dropped in `Exec_Springs.lua`?)
 	if player.mo and player.mo.valid then
 		player.suicide_watch = true // is this joke too dark?

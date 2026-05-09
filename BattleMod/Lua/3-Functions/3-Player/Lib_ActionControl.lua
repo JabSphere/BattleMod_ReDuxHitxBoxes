@@ -4,7 +4,10 @@ local S = B.SkinVars
 
 local spendringwarning = false
 
-B.MasterActionScript = function(player,doaction)
+B.MasterActionScript = function(player,doaction,type)
+	-- 0 = PlayerThink
+	-- 1 = ThinkFrame
+
 	--Set action state
 	player.actionallowed = B.CanDoAction(player)
 	player.actioncooldown = max($,player.tossdelay-TICRATE)
@@ -34,27 +37,34 @@ B.MasterActionScript = function(player,doaction)
 
 	local t = player.skinvars
 	--Reset action values for this frame
-	player.actiontext = nil
-	player.action2text = nil
-	player.actionrings = 0
-	player.action2rings = 0
-	player.actiontextflags = nil
-	player.action2textflags = nil
-	player.actionsuper = false
-	--Set exhaustmeter hud (if enabled)
-	if player.exhaustmeter ~= FRACUNIT then
--- 		player.action2text = player.exhaustmeter*100/FRACUNIT.."%"
-		if player.exhaustmeter > FRACUNIT/3 or (player.exhaustmeter > 0 and leveltime&4) then
-			player.action2textflags = 0
-		elseif player.exhaustmeter > 0 then
-			player.action2textflags = 2
-		else
-			player.action2textflags = 3
+	if type == 1 then
+		player.actiontext = nil
+		player.action2text = nil
+		player.actionrings = 0
+		player.action2rings = 0
+		player.actiontextflags = nil
+		player.action2textflags = nil
+		player.actionsuper = false
+		--Set exhaustmeter hud (if enabled)
+		if player.exhaustmeter ~= FRACUNIT then
+	-- 		player.action2text = player.exhaustmeter*100/FRACUNIT.."%"
+			if player.exhaustmeter > FRACUNIT/3 or (player.exhaustmeter > 0 and leveltime&4) then
+				player.action2textflags = 0
+			elseif player.exhaustmeter > 0 then
+				player.action2textflags = 2
+			else
+				player.action2textflags = 3
+			end
 		end
 	end
 	--Perform action script
-	if S[t].special ~= nil then
-		S[t].special(mo,doaction)
+	local special = S[t].special
+	if type == 0 then
+		special = S[t].special_playerthink
+	end
+
+	if special ~= nil then
+		special(mo,doaction)
 		--For custom characters
 		if player.spendrings == 1 then
 			if not(spendringwarning) then
