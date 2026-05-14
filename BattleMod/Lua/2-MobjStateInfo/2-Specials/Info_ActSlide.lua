@@ -21,7 +21,7 @@ sfxinfo[sfx_fn_trg].caption = "Clocked back gun"
 
 states[S_FANG_SPRINGDROP] = {
 	sprite = SPR_PLAY,
-	frame = SPR2_LAND|A,
+	frame = SPR2_LAND,
 	tics = -1,
 	var2 = PF_BOUNCING,
 	nextstate = S_FANG_SPRINGDROP,
