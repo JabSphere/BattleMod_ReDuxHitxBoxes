@@ -87,10 +87,7 @@ S["fang"] = {
 	func_precollide = B.Fang_PreCollide,
 	func_collide = B.Fang_Collide,
 	func_postcollide = B.Fang_PostCollide,
-	sprites = {
-		S_FANG_AIRSHOT,
-	    S_FANG_BCESHOT
-	}	
+	sprites = {}	
 }
 S["metalsonic"] = {
 	flags = SKINVARS_GUARD|SKINVARS_DASHMODENERF,
