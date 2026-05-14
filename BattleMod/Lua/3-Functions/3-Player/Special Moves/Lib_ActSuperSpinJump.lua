@@ -30,7 +30,7 @@ B.Action.SuperSpinJump_Priority = function(player)
 	elseif player.actionstate == state_groundpound_rise then
 		B.SetPriority(player,1,1,nil,1,1,"rising ground pound")
 	elseif player.actionstate == state_groundpound_fall then
-		B.SetPriority(player,1,1,nil,1,1,"ground pound")
+		B.SetPriority(player,1,1,"fang_tailbounce",2,1,"ground pound")
 	elseif player.actionstate == state_superspinwave then
 		B.SetPriority(player,0,0,nil,0,0,"spin wave recoil")
 	end
