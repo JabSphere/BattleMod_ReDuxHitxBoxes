@@ -233,7 +233,6 @@ B.Action.Slide = function(mo,doaction)
 		player.pflags = ($|PF_SPINNING) & ~(PF_THOKKED|PF_JUMPED|PF_BOUNCING)
 
 		if mo.eflags & MFE_JUSTHITFLOOR then
-		/*or mo.eflags & MFE_SPRUNG*/
 			mo.state = S_FANG_SLIDE
 		end
 		if mo.eflags & MFE_JUSTHITFLOOR then
