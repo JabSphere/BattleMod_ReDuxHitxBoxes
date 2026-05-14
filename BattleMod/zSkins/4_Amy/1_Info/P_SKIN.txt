@@ -1,3 +1,4 @@
 name = amy
 thokitem = MT_NULL
 revitem = MT_NULL
+jumpfactor = 1.1

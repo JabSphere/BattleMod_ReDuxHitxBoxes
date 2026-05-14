@@ -3,3 +3,4 @@ actionspd = 32
 radius = 24
 height = 52
 mindash = 25
+jumpfactor = 0.95
