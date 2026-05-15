@@ -78,6 +78,7 @@ B.pogo = function(player)
 	    --Handling
 	    player.thrustfactor = skins[player.mo.skin].thrustfactor+2
 		if not (player.pflags & PF_JUMPDOWN) then
+			if (mo.momz*P_MobjFlip(mo)) > 0 then mo.momz = $/2 end
 			P_ResetPlayer(player)
 			if P_IsObjectOnGround(mo) then
 				mo.state = S_PLAY_WALK
