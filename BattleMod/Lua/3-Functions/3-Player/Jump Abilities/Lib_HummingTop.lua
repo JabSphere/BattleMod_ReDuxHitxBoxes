@@ -286,6 +286,7 @@ function B.HummingTop_MainHook(player)
 		if humming then
 			if cancel then
 				cancelHummingTop(player, true)
+				cancelDropDash(mo)
 			end
 			if recurlable and spin and inexhausted and not(cancel) then
 				player.exhaustmeter = max(1, $-exhaust_chunk)
@@ -347,6 +348,8 @@ function B.HummingTop_MainHook(player)
 				mo.state = $
 				cancelDropDash(mo)
 			end
+		elseif cancel then
+			cancelDropDash(mo)
 		end
 
 			
