@@ -452,8 +452,6 @@ function B.Sonic_PostCollide(n1,n2,plr,mo,atk,def,weight,hurt,pain,ground,angle,
 			mo[n1].recurl_actionable = true
 			return
 		else
-			--Normal interaction
-			collisiontype = 3
 			return
 		end
 	end
@@ -887,7 +885,7 @@ B.Sonic_HTopMoveBlocked = function(mo)
 	local player = mo.player
 	if not (param(player)) return end
 	local line = player.bounceline
-	if line == nil return end
+	if not(line and line.valid) then return end
 
 	--Noclimb walls result in a super weak bounce
 	local nocl = player.bounceline.flags & ML_NOCLIMB
