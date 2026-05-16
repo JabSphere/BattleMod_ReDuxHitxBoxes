@@ -205,9 +205,6 @@ local function cancelDropDash(mo)
 	mo.dropdash_actionable = nil
 	mo.dropdash_prep = nil
 	mo.dropdash_momz = nil
-	if mo.player then
-		mo.player.pflags = $|PF_THOKKED
-	end
 end
 
 local state_superspinjump = 1
@@ -248,7 +245,7 @@ function B.HummingTop_MainHook(player)
 		if grounded then
 			if dropdashing then
 				mo.state = S_PLAY_ROLL
-				player.pflags = $1|PF_SPINNING
+				player.pflags = $|PF_SPINNING
 				S_StartSound(mo, sfx_zoom, player)
 				local speed = abs(mo.dropdash_momz/2)+FixedHypot(player.rmomx,player.rmomy)
 				local actionspd = player.actionspd
@@ -294,7 +291,7 @@ function B.HummingTop_MainHook(player)
 			if recurlable and spin and inexhausted and not(cancel) then
 				player.exhaustmeter = max(1, $-exhaust_chunk)
 				cancelHummingTop(player, false)
-				player.pflags = ($|PF_JUMPED) & ~(PF_NOJUMPDAMAGE|PF_SPINNING|PF_THOKKED)
+				player.pflags = ($|PF_JUMPED) & ~(PF_NOJUMPDAMAGE|PF_SPINNING|PF_THOKKED|PF_SHIELDABILITY)
 				S_StartSound(mo, sfx_zoom)
 				mo.state = S_PLAY_ROLL
 				mo.dropdash_actionable = 0
@@ -312,6 +309,7 @@ function B.HummingTop_MainHook(player)
 					end
 				end
 				if (mo.dropdash_prep == 100) then
+					player.pflags = $|PF_SHIELDABILITY
 				
 					local mo = mo
 
@@ -349,10 +347,12 @@ function B.HummingTop_MainHook(player)
 				end
 			else
 				mo.state = $
+				player.pflags = $ & ~PF_SHIELDABILITY
 				cancelDropDash(mo)
 			end
 		elseif cancel then
 			cancelDropDash(mo)
+			player.pflags = $|PF_THOKKED
 		end
 
 			
