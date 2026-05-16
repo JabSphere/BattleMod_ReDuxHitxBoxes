@@ -205,6 +205,9 @@ local function cancelDropDash(mo)
 	mo.dropdash_actionable = nil
 	mo.dropdash_prep = nil
 	mo.dropdash_momz = nil
+	if mo.player then
+		mo.player.pflags = $|PF_THOKKED
+	end
 end
 
 local state_superspinjump = 1
@@ -551,7 +554,6 @@ local param = function(player)
 	and player.mo.valid 
 	and (
 			(player.mo.hummingtop_state == state_spinning)
-	     or (player.mo.dropdash_prep == 100)
 		 --or (player.actionstate == state_superspinjump)
 	)
 end
@@ -771,9 +773,6 @@ local function DoWallBounce(mo,player,wallnormangle,walltype,side,reflect)
 			bouncez = $ + 11*mo.scale
 			S_StartSound(mo,sfx_cdfm62)
 		end
-	else
-		wallth = FixedMul(mo.scale, ((player.maxdash/7)))
-		bouncez = FixedMul(mo.scale, ((player.maxdash/6)))
 	end
 	
 	--Do the horizontal bounce
@@ -785,9 +784,6 @@ local function DoWallBounce(mo,player,wallnormangle,walltype,side,reflect)
 		else
 			P_Thrust(mo, wallnormangle, -wallth)
 			player.drawangle = wallnormangle + ANGLE_180
-		end
-		if dropdash then
-			mo.angle = player.drawangle
 		end
 	end
 	
@@ -872,12 +868,8 @@ local function DoWallBounce(mo,player,wallnormangle,walltype,side,reflect)
 			P_RemoveMobj(player.mo.hummingtop_arrow)
 			player.mo.hummingtop_arrow = nil
 		end
-	else
-		player.actionstate = 0
-		player.pflags = $|(PF_THOKKED|PF_NOJUMPDAMAGE) & ~(PF_SPINNING|PF_JUMPED)
-		player.mo.state = S_PLAY_SPRING
 	end
-	S_StartSound(mo, (dropdash and sfx_zoom) or sfx_bounc1)
+	S_StartSound(mo, sfx_bounc1)
 	cancelDropDash(mo)
 end
 
