@@ -209,7 +209,7 @@ local function newGunslinger(player)
 
 			if (bullet and bullet.valid)
 				-- bullet.flags = $1 & ~MF_NOGRAVITY
-				local speed = max(46 * mo.scale, FixedHypot(mo.momx - player.cmomx, mo.momy - player.cmomy) * 3 / 4)
+				local speed = max(60 * mo.scale, FixedHypot(mo.momx - player.cmomx, mo.momy - player.cmomy) * 3 / 4)
 				local angle = R_PointToAngle2(0, 0, bullet.momx, bullet.momy)
 				local aiming = R_PointToAngle2(0, 0, FixedHypot(bullet.momx, bullet.momy), bullet.momz)
 

@@ -85,7 +85,7 @@ B.Action.Dig=function(mo,doaction)
 	local skin = skins[player.skin]
 	local gray = "\x86"
 	
-	if not (player.gotflag or player.gotcrystal) and player.actionstate == 0 then //For digging state
+	if not (player.gotflag or player.gotcrystal) and player.actionstate == 0 and player.slipping == false then //For digging state
 		player.normalspeed = skin.normalspeed
 		player.acceleration = skin.acceleration
 		player.thrustfactor = skin.thrustfactor
@@ -322,8 +322,10 @@ B.Action.Dig=function(mo,doaction)
 	mo.flags2 = $|MF2_DONTDRAW //Invisibility
 	player.charability2 = 0 //Disallow spindashing
 	player.canguard = false //Disallow guarding
-	player.normalspeed = skin.normalspeed*9/8
-	player.acceleration = skin.acceleration*9/8
+	if player.slipping == false
+		player.normalspeed = skin.normalspeed*9/8
+		player.acceleration = skin.acceleration*9/8
+	end
 	
 	//Clip to ground
 	if not(climbing) then

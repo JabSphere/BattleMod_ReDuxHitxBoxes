@@ -284,10 +284,10 @@ addHook("MobjSpawn",function(mo)
 	if mo.valid
 		mo.hit_sound = sfx_hit04
 		mo.blockable = 1
-		mo.block_stun = 5
+		mo.block_stun = 10
 		--mo.block_sound = sfx_s3kb5
-		mo.block_hthrust = 3
-		mo.block_vthrust = 10
+		mo.block_hthrust = 10
+		mo.block_vthrust = 5
 		mo.spawnfire = true
 	end
 	return true --Overwrite default behavior so that corks won't damage invulnerable players
