@@ -180,7 +180,7 @@ B.Action.Dig=function(mo,doaction)
 		mo.state = S_PLAY_ROLL
 		local dir = R_PointToAngle2(0,0,mo.momx,mo.momy)
 		local speed = FixedHypot(mo.momx,mo.momy)
-		B.InstaThrustZAim(mo,dir,-ANGLE_90,min(speed,mo.scale*36))
+		B.InstaThrustZAim(mo,dir,ANGLE_11hh,min(speed,mo.scale*60))
 		mo.momz = min(-12*mo.scale,$*P_MobjFlip(mo))*P_MobjFlip(mo)
 		player.pflags = $|(PF_JUMPED|PF_THOKKED)&~(PF_GLIDING)
 		S_StartSound(mo,sfx_zoom)
