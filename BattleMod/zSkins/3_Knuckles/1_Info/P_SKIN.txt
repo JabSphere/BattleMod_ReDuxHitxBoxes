@@ -1,6 +1,4 @@
 name = knuckles
-actionspd = 32
-radius = 24
-height = 52
+actionspd = 24
 mindash = 25
 jumpfactor = 0.95
