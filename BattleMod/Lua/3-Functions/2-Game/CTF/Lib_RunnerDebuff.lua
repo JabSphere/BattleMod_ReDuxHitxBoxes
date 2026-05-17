@@ -34,6 +34,7 @@ B.GotFlagStats = function(player, force)
 		player.gotflagdebuff = false
 		player.normalspeed = skin.normalspeed
 		player.acceleration = skin.acceleration
+		player.accelstart = skin.accelstart
 		player.runspeed = skin.runspeed
 		player.mindash = skin.mindash
 		player.maxdash = skin.maxdash
@@ -48,6 +49,7 @@ B.GotFlagStats = function(player, force)
 		if not(B.GetSkinVarsFlags(player) & SKINVARS_ROSY) then
 			player.mindash = skinvar.mindash or (15*3/4*FRACUNIT)
 			player.maxdash = skinvar.maxdash or (36*4/5*FRACUNIT)
+			player.accelstart = skin.accelstart*1/2
 		end
 		player.dashmode = 0
 		player.jumpfactor = skinvar.jumpfactor or FRACUNIT
