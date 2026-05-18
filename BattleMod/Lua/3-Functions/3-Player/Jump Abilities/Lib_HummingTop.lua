@@ -160,7 +160,7 @@ function B.HummingTop_AbilitySpecial(player)
 		player.mo.state = S_PLAY_FALL
 		player.canguard = false
 		
-		player.mo.hummingtop_arrow = P_SpawnMobj(player.mo.x+cos(player.mo.hummingtop_angle)*ARROW_DIST, player.mo.y+sin(player.mo.hummingtop_angle)*ARROW_DIST, getMiddle(player.mo, mobjinfo[MT_DUST].height), MT_DUST)
+		/*player.mo.hummingtop_arrow = P_SpawnMobj(player.mo.x+cos(player.mo.hummingtop_angle)*ARROW_DIST, player.mo.y+sin(player.mo.hummingtop_angle)*ARROW_DIST, getMiddle(player.mo, mobjinfo[MT_DUST].height), MT_DUST)
 		applyFlip(player.mo, player.mo.hummingtop_arrow)
 		player.mo.hummingtop_arrow.angle = player.mo.hummingtop_angle
 		player.mo.hummingtop_arrow.fuse = (B.Console.HTop_Commit.value)
@@ -170,7 +170,7 @@ function B.HummingTop_AbilitySpecial(player)
 		player.mo.hummingtop_arrow.sprite = SPR_LCKN
 		player.mo.hummingtop_arrow.frame = _G["C"]|FF_PAPERSPRITE
 		player.mo.hummingtop_arrow.rollangle = ANGLE_90
-		player.mo.hummingtop_arrow.renderflags = RF_FULLBRIGHT
+		player.mo.hummingtop_arrow.renderflags = RF_FULLBRIGHT*/
 		--This function is just a trigger for the main hook
 		player.mo.hummingtop_state = state_spinning
 		return true
