@@ -350,9 +350,11 @@ function B.HummingTop_MainHook(player)
 				player.pflags = $ & ~PF_SHIELDABILITY
 				cancelDropDash(mo)
 			end
-		elseif cancel then
+		elseif cancel and dropdashing then
 			cancelDropDash(mo)
-			player.pflags = $|PF_THOKKED
+			if not(grounded) then
+				player.pflags = $|PF_THOKKED
+			end
 		end
 
 			
