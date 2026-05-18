@@ -198,6 +198,11 @@ B.BattleTagPointers = function(mo)
 				hide = true
 				delete = true
 			end
+
+			if not(target and target.valid) or (target and target.valid and target.player) then
+				hide = true
+				delete = true
+			end
 		else
 			if player.gotflag then
 				target = ({F.RedFlagPos, F.BlueFlagPos})[player.ctfteam]
@@ -465,5 +470,19 @@ B.BattleTagPointers = function(mo)
 		mo.flags = $ & ~MF_NOSECTOR
 	end
 	mo.interpolation_fix = true
+
+	if delete then
+		if mo.tracer and mo.tracer.valid and mo.tracer.player then
+			if mo.tracer.btagpointer2 == mo then
+				mo.tracer.btagpointer2 = nil
+			end
+			if mo.tracer.btagpointer == mo then
+				mo.tracer.btagpointer = nil
+			end
+		end
+		P_RemoveMobj(mo)
+		return
+	end
+
 end
 addHook("MobjThinker", B.BattleTagPointers, MT_BTAG_POINTER)
