@@ -444,8 +444,8 @@ F.GetFlagPos = function()
 
 	-- Find flag coordinates in the map, and save them; They will be used to spawn the flag
 	local flagpositions = F.GetFlagPosAsTables()
-	F.RedFlagPos = flagpositions[1]
-	F.BlueFlagPos = flagpositions[2]
+	F.RedFlagPos = flagpositions.r
+	F.BlueFlagPos = flagpositions.b
 end
 
 -- Makes an injured or dead player lose possession of the flag.
