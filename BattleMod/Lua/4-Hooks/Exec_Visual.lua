@@ -171,6 +171,14 @@ addHook("MobjThinker", B.BattleTagITtag, MT_BATTLETAG_IT)
 local ARROW_TAGSCALE = 0
 local ARROW_CONSTANTSCALE = 1
 local ARROW_INVERTSCALE = 2
+/*
+
+0 = Spectator
+1 = Red Team
+2 = Blue Team
+
+*/
+
 //thinker for pointer
 B.BattleTagPointers = function(mo)
 	local hide = false
@@ -180,43 +188,32 @@ B.BattleTagPointers = function(mo)
 	local color = SKINCOLOR_NONE
 	local player = (mo.tracer and mo.tracer.player) or nil
 
-	if not(B.IsValidPlayer(mo.tracer)) or not(mo.tracer) or (player.playerstate == PST_DEAD) then
+	if not(B.IsValidPlayer(mo.tracer)) or not(mo.tracer) or (player.playerstate == PST_DEAD) or (player.ctfteam == 0) then
 		if mo and mo.valid then
 			P_RemoveMobj(mo)
 		end
 		return false
 	elseif (gametype == GT_BATTLECTF) then
 		arrowscale = (mo.allydrop and ARROW_CONSTANTSCALE) or ARROW_INVERTSCALE
-		if mo.allydrop then
-			if (player.ctfteam == 2) and (F.RedFlag and F.RedFlag.valid) then
-				target = F.RedFlag
-				color = skincolor_redteam
-			elseif (player.ctfteam == 1) and (F.BlueFlag and F.BlueFlag.valid) then
-				target = F.BlueFlag
-				color = skincolor_blueteam
-			else
+		if mo.allydrop then --Flag was dropped?
+
+			-- Point to the enemy flag
+			target = ({F.BlueFlag, F.RedFlag})[player.ctfteam]
+			color = ({skincolor_blueteam, skincolor_redteam})[player.ctfteam]
+			if player and player.gotflag then --Someone grabbed the flag? All good.
 				hide = true
-				delete = true
 			end
 
-			if not(target and target.valid) or (target and target.valid and target.player) then
-				hide = true
-				delete = true
-			end
-		else
-			if player.gotflag then
+		else --The Constant CTF Arrows
+
+			if player.gotflag then --You have the flag?
+				-- Point to home base
 				target = ({F.RedFlagPos, F.BlueFlagPos})[player.ctfteam]
 				color = ({skincolor_redteam, skincolor_blueteam})[player.ctfteam]
-			else
-				if (player.ctfteam == 1) and (F.RedFlag and F.RedFlag.valid) then
-					target = F.RedFlag
-					color = skincolor_redteam
-				elseif (player.ctfteam == 2) and (F.BlueFlag and F.BlueFlag.valid) then
-					target = F.BlueFlag
-					color = skincolor_blueteam
-				else
-					hide = true
-				end
+			else --Flag chaser?
+				-- Point to your own flag
+				target = ({F.RedFlag, F.BlueFlag})[player.ctfteam]
+				color = ({skincolor_redteam, skincolor_blueteam})[player.ctfteam]
 			end
 		end
 	elseif B.TagGametype() then
@@ -338,7 +335,7 @@ B.BattleTagPointers = function(mo)
 		end
 	end
 
-	if not(target and target.valid) then
+	if (type(target) == "userdata") and (userdataType(target) == "mobj_t") and not(target and target.valid) then
 		hide = true
 	end
 
@@ -470,7 +467,6 @@ B.BattleTagPointers = function(mo)
 		mo.flags = $ & ~MF_NOSECTOR
 	end
 	mo.interpolation_fix = true
-
 	if delete then
 		if mo.tracer and mo.tracer.valid and mo.tracer.player then
 			if mo.tracer.btagpointer2 == mo then
