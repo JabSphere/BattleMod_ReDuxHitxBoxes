@@ -179,6 +179,11 @@ local ARROW_INVERTSCALE = 2
 
 */
 
+local st_atbase      =  0   -- Default State, flag is at base
+local st_dropped   =  1   -- Flag was dropped by the flagholder
+local st_tossed    =  2   -- Flag was tossed by the flagholder
+local st_inposession =  3   -- Flag is currently in posession
+
 //thinker for pointer
 B.BattleTagPointers = function(mo)
 	local hide = false
@@ -194,26 +199,114 @@ B.BattleTagPointers = function(mo)
 		end
 		return false
 	elseif (gametype == GT_BATTLECTF) then
-		arrowscale = (mo.allydrop and ARROW_CONSTANTSCALE) or ARROW_INVERTSCALE
-		if mo.allydrop then --Flag was dropped?
+		arrowscale = ARROW_INVERTSCALE
 
-			-- Point to the enemy flag
-			target = ({F.BlueFlag, F.RedFlag})[player.ctfteam]
-			color = ({skincolor_blueteam, skincolor_redteam})[player.ctfteam]
-			if player and player.gotflag then --Someone grabbed the flag? All good.
+
+		local homeflag = ({F.RedFlag, F.BlueFlag})[player.ctfteam] --Your team's flag
+		local enemyflag = ({F.BlueFlag, F.RedFlag})[player.ctfteam] --Enemy team's flag
+
+		local homebase = ({F.RedFlagPos, F.BlueFlagPos})[player.ctfteam] --Your team's base
+		local enemybase = ({F.BlueFlagPos, F.RedFlagPos})[player.ctfteam] --Enemy team's base
+
+		local homecolor = ({skincolor_redteam, skincolor_blueteam})[player.ctfteam] --Your team's skincolor
+		local enemycolor = ({skincolor_blueteam, skincolor_redteam})[player.ctfteam] -- Enemy team's skincolor
+
+		local flag_states = {st_atbase, st_atbase}
+
+		for i = 1, 2 do
+
+			local flag = ({F.RedFlag, F.BlueFlag})[i] --Execute this for both flags
+
+
+			if flag and flag.valid then --Flag exists?
+				
+				-- Booleans
+				local flag_tossed  		= (flag.flagtossed  and true) or false
+				local flag_dropped 		= (flag.flagdropped and true) or false
+				local flag_inposession  = (flag.player 	    and true) or false
+
+				if flag_inposession then
+					flag_states[i] = st_inposession
+				elseif flag_dropped then
+					flag_states[i] = st_dropped
+				elseif flag_tossed then
+					flag_states[i] = st_tossed
+				else
+					flag_states[i] = st_atbase
+				end
+			end
+		end
+
+		local redflag_state  = flag_states[1]
+		local blueflag_state = flag_states[2]
+
+		local homeflag_state  = ({flag_states[1], flag_states[2]})[player.ctfteam]
+		local enemyflag_state = ({flag_states[2], flag_states[1]})[player.ctfteam]
+		
+		if mo.allydrop then --Enemy flag was dropped, and this is the special arrow?
+
+			arrowscale = ARROW_CONSTANTSCALE
+			if enemyflag_state == st_dropped then
+				--Someone needs to grab it before the enemy team does
+				target = enemyflag
+				color = enemycolor
+				--Point to the enemy flag
+			else
 				hide = true
 			end
 
-		else --The Constant CTF Arrows
+		
+		elseif player.gotflag --You are the flagholder?
+			--You need to capture the flag
+			target = homebase
+			color = homecolor
+			--Point to your team's base
 
-			if player.gotflag then --You have the flag?
-				-- Point to home base
-				target = ({F.RedFlagPos, F.BlueFlagPos})[player.ctfteam]
-				color = ({skincolor_redteam, skincolor_blueteam})[player.ctfteam]
-			else --Flag chaser?
-				-- Point to your own flag
-				target = ({F.RedFlag, F.BlueFlag})[player.ctfteam]
-				color = ({skincolor_redteam, skincolor_blueteam})[player.ctfteam]
+		else --The Constant CTF Arrows
+			if homeflag_state == st_dropped then --Enemy flagholder dropped the flag?
+				--You need to return it
+				target = homeflag
+				color = homecolor
+				--Point to your team's flag
+				
+			elseif homeflag_state == st_tossed then --Enemy flagholder tossed the flag?
+				--You need to return it
+				target = homeflag
+				color = homecolor
+				--Point to your team's flag
+
+			elseif homeflag_state == st_inposession then --Enemy flagholder has the flag?
+				--You need to return it
+				target = homeflag
+				color = homecolor
+				--Point to your team's flag
+
+			else --Your team's flag must be at base
+
+				if enemyflag_state == st_dropped then --Flagholder dropped the flag?
+					--The allydrop arrow already takes care of this
+					target = homeflag
+					color = homecolor
+					--Point to your team's flag
+
+				elseif enemyflag_state == st_tossed then --Flagholder tossed the flag?
+					--Assume they tossed it for a reason, and know what they are doing
+					target = homeflag
+					color = homecolor
+					--Point to your team's flag
+
+				elseif enemyflag_state == st_inposession then --Flagholder has the enemy flag?
+					--Base still needs to be defended
+					target = homeflag
+					color = homecolor
+					--Point to your team's flag
+
+				else --Enemy flag must be at base
+					--Someone needs to grab the enemy flag
+					target = enemyflag
+					color = enemycolor
+					--Point to the enemy team's flag
+				end
 			end
 		end
 	elseif B.TagGametype() then
