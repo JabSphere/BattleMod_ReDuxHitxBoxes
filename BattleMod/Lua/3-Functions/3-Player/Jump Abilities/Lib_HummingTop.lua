@@ -130,7 +130,8 @@ function B.HummingTop_AbilitySpecial(player)
 		P_InstaThrust(player.mo, player.mo.hummingtop_angle, thrust)
 		--P_SetObjectMomZ(player.mo, FixedMul(player.mo.scale, B.Console.HTop_ZThrust.value), false)
 		player.mo.momz = 0
-		S_StartSound(player.mo, sfx_htop)
+		S_StopSoundByID(player.mo, sfx_thok)
+		S_StartSound(player.mo, sfx_thok)
 		if thrust > actionspd then
 			spawncircle(player.mo)
 			S_StartSound(player.mo, sfx_dash)
@@ -198,7 +199,6 @@ local function cancelHummingTop(player, sound)
 	player.mo.hummingtop_drawangle = nil
 	player.glidetime = 0
 	player.pflags = $ & ~PF_STASIS
-	S_StopSoundByID(player.mo, sfx_htop)
 end
 
 local function cancelDropDash(mo)
